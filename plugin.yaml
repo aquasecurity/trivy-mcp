@@ -1,5 +1,6 @@
 name: mcp
 repository: github.com/aquasecurity/trivy-mcp
+maintainer: aquasecurity
 version: 0.0.4
 summary: Starts an MCP server that knows how to work with Trivy
 description: |-
