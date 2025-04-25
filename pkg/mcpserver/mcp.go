@@ -55,7 +55,7 @@ func (m *McpServer) Start() error {
 		s := server.NewSSEServer(m.Server, server.WithBaseURL(fmt.Sprintf("http://localhost:%d", m.Port)), server.WithKeepAlive(true))
 		return s.Start(fmt.Sprintf(":%d", m.Port))
 	} else if m.Transport == "stdio" {
-		log.Info("Starting Trivy MCP server as stdio", log.Int("port", m.Port))
+		log.Info("Starting Trivy MCP server as stdio")
 		s := server.NewStdioServer(m.Server)
 		return s.Listen(context.Background(), os.Stdin, os.Stdout)
 	}
