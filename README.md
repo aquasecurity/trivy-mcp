@@ -3,30 +3,17 @@
 This plugin starts an MCP Server that can be used as a gateway to Trivy
 
 > [!IMPORTANT]
-> This is early stage development of the MCP Server, so some setup is required and you should assume things won't work great for now
+> This is early stage development of the MCP Server, so you should assume things won't work great for now
 
-# Local Development
+## Installing the plugin
 
-These steps should get you up and running while the development is being done
+To install the plugin you can use Trivy's plugin management system
 
-## Prereqs
+```sh
+trivy plugin install mcp
+```
 
-- Go (1.24.1)
-- make
-- Trivy installed
-
-## Installing the Trivy Plugin
-
-Normally, when installing a Trivy plugin you would do `trivy plugin install <pluginName>`, as this isn't a public repo just yet, we need to do it manually for now.
-
-1. Create the plugin path and setup the manifest file
-   ```sh
-   make add-plugin-manifest
-   ```
-2. Install the plugin
-   ```ssh
-   make install-plugin
-   ```
+The will install the latest version of the plugin
 
 ## Starting the plugin
 
@@ -64,6 +51,20 @@ Now, we need to configure the server in VSCode to start using as an agent
 6. Saving to User Settings 
 7. The settings.json should open
 8. Find the new server, there will be an annotation to `Start` 
+
+Your `mcp` block in the `settings.json` should look something like this;
+
+```json
+ "mcp": {
+
+    "servers": {
+      "my-mcp-server-abd8d2de": {
+        "type": "sse",
+        "url": "http://localhost:23456/sse"
+      }
+    }
+  },
+```
 
 
 ## Some sample prompts
