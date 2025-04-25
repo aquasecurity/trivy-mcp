@@ -1,0 +1,44 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+env:
+  GO_VERSION: '1.22'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set new version from tag
+        run: echo "NEW_VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+
+      - name: Check if manifest is updated
+        run: |
+          make bump-manifest
+          if [ -n "$(git status --porcelain plugin.yaml)" ]; then
+            echo "The version of the plugin in manifest is not updated. Please run 'NEW_VERSION=version make bump-manifest'"
+            exit 1
+          fi
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build
+        run: make build
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            trivy-plugin-mcp-*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

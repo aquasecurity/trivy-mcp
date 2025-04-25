@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/aquasecurity/trivy-plugin-mcp/pkg/flag"
+	"github.com/aquasecurity/trivy-plugin-mcp/pkg/mcpserver/tools"
 	"github.com/aquasecurity/trivy/pkg/log"
 	"github.com/mark3labs/mcp-go/server"
 )
@@ -16,7 +17,7 @@ type McpServer struct {
 	// Port is the port to listen on
 	Port int
 	// Tools is the list of tools to register with the server
-	Tools []TrivyTool
+	Tools []tools.TrivyTool
 }
 
 func NewMcpServer(opts flag.Options) *McpServer {
@@ -25,31 +26,13 @@ func NewMcpServer(opts flag.Options) *McpServer {
 		"0.0.0",
 	)
 
-	th := NewTrivyTools(opts)
-	tools := []TrivyTool{
-		{
-			scanFilesystemTool,
-			th.scanWithTrivyHandler,
-		},
-		{
-			scanImageTool,
-			th.scanWithTrivyHandler,
-		},
-		{
-			scanRepositoryTool,
-			th.scanWithTrivyHandler,
-		},
-		{
-			trivyVersionTool,
-			th.trivyVersionHandler,
-		},
-	}
+	th := tools.NewTrivyTools(opts)
 
 	return &McpServer{
 		Server:    s,
 		Transport: opts.Transport,
 		Port:      opts.SSEPort,
-		Tools:     tools,
+		Tools:     th.GetTools(),
 	}
 
 }
@@ -58,8 +41,8 @@ func (m *McpServer) Start() error {
 
 	// Register the tools with the server
 	for _, tool := range m.Tools {
-		log.Infof("Registering tool: %s", tool.tool.Name)
-		m.Server.AddTool(tool.tool, tool.handler)
+		log.Infof("Registering tool: %s", tool.Tool.Name)
+		m.Server.AddTool(tool.Tool, tool.Handler)
 	}
 
 	// Start the server

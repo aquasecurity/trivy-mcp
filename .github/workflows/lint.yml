@@ -1,0 +1,28 @@
+name: Lint
+
+on:
+  push:
+    tags:
+      - v*
+  pull_request:
+  merge_group:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  golangci:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.64.2
+          skip-cache: true
+          args: --timeout 10m --verbose
