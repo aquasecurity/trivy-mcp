@@ -1,4 +1,4 @@
-# Trivy MCP Server Plugin - *EXPERIMENTAL WIP*
+# Trivy MCP Server Plugin - _EXPERIMENTAL WIP_
 
 This plugin starts an MCP Server that can be used as a gateway to Trivy
 
@@ -20,18 +20,18 @@ The will install the latest version of the plugin
 You're now ready to start the plugin, this will launch an MCP server that Cursor or VSCode can interact with. For now, the instructions will focus on VSCode
 
 ```sh
-trivy mcp 
+trivy mcp
 ```
 
 ### Options
 
 Along with the usual global flags supported by Trivy, the following flags are available for the MCP server. For now, you don't need to specify any of them
 
-| Argument         | Options | Default | Description                                             |
-| ---------------- | ------- | ------- | ------------------------------------------------------- |
-| --transport / -t | sse     | sse     | The transport of MCP Server to run                      |
-| --port / -p      |         | 23456   | The port to launch the MCP server on                    |
-| --trivy-binary   |         |         | Optionally provide a binary to use instead of core code |
+| Argument             | Options        | Default | Description                                             |
+| -------------------- | -------------- | ------- | ------------------------------------------------------- |
+| `--transport` / `-t` | `sse`, `stdio` | `stdio` | The transport of MCP Server to run                      |
+| `--port` / `-p`      |                | 23456   | The port to launch the MCP server on                    |
+| `--trivy-binary`     |                |         | Optionally provide a binary to use instead of core code |
 
 ## Configuring the MCP Server in VSCode
 
@@ -39,32 +39,54 @@ Now, we need to configure the server in VSCode to start using as an agent
 
 ### Prereqs
 
-- \>= version 1.99.0 of VSCode
+- \>= version 1.99.0 of VS Code
 
 ### Configuring the plugin
 
-1. Press `F1`
-2. Search for "MCP: Add Server" 
-3. Choose HTTP (server-sent events) 
-4. Set the url to http://localhost:23456/sse 
-5. Give it a name like trivy mcp 
-6. Saving to User Settings 
-7. The settings.json should open
-8. Find the new server, there will be an annotation to `Start` 
+You can configure the Trivy mcp to start itself or us the sse http endpoint
 
-Your `mcp` block in the `settings.json` should look something like this;
+#### Configuring for stdio
 
-```json
- "mcp": {
-
-    "servers": {
-      "my-mcp-server-abd8d2de": {
-        "type": "sse",
-        "url": "http://localhost:23456/sse"
+1. In VS Code, press `F1`
+2. Search for `"Preferences: Open User Settings (JSON)"`
+3. Find or create the `"mcp"` block and add a server as below
+   ```json
+   "mcp": {
+      "servers": {
+         "Trivy MCP": {
+            "command": "trivy",
+            "args": [
+               "mcp",
+               "-t",
+               "stdio"
+            ]
+         }
       }
-    }
-  },
-```
+   }
+   ```
+4. When you save, an annotation will appear to `Start` the server
+
+#### Configuring for SSE HTTP
+
+1. Start the MCP Server
+   ```sh
+   trivy mcp -t sse -p 23456
+   ```
+2. In VS Code, press `F1`
+3. Search for `"Preferences: Open User Settings (JSON)"`
+4. Find or create the `"mcp"` block and add a server as below
+   ```json
+   "mcp": {
+      "servers": {
+         "Trivy SSE": {
+            "type": "sse",
+            "url": "http://localhost:23456/sse"
+         }
+      }
+   }
+   ```
+5. When you save, an annotation will appear to `Start` the server
+
 
 
 ## Some sample prompts

@@ -12,6 +12,7 @@ var (
 		ConfigName: "mcp.transport",
 		Usage:      "Transport to use for the connection",
 		Default:    "sse",
+		Values:     []string{"sse", "stdio"},
 	}
 	ssePortFlag = trivyflag.Flag[int]{
 		Name:       "port",
