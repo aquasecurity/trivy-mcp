@@ -2,8 +2,9 @@ name: mcp
 repository: github.com/aquasecurity/trivy-plugin-mcp
 version: 0.0.1
 summary: Starts an MCP server that knows how to work with Trivy
-usage: ""
-description: A plugin for starting a Trivy MCP Server to allow Trivy scanning
+description: |-
+  A Trivy plugin that starts an MCP server that knows how to work with Trivy.
+  Usage: trivy mcp [flags]
 platforms:
     - selector:
         os: linux
