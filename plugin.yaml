@@ -1,7 +1,7 @@
 name: mcp
 repository: github.com/aquasecurity/trivy-mcp
 maintainer: aquasecurity
-version: 0.0.4
+version: 0.0.5
 summary: Starts an MCP server that knows how to work with Trivy
 description: |-
   A Trivy plugin that starts an MCP server that knows how to work with Trivy.
@@ -10,25 +10,25 @@ platforms:
     - selector:
         os: linux
         arch: amd64
-      uri: https://github.com/aquasecurity/trivy-mcp/releases/download/v0.0.4/trivy-mcp-linux-amd64.tar.gz
+      uri: https://github.com/aquasecurity/trivy-mcp/releases/download/v0.0.5/trivy-mcp-linux-amd64.tar.gz
       bin: ./trivy-mcp
     - selector:
         os: linux
         arch: arm64
-      uri: https://github.com/aquasecurity/trivy-mcp/releases/download/v0.0.4/trivy-mcp-linux-arm64.tar.gz
-      bin: ./trivy-mcpp
+      uri: https://github.com/aquasecurity/trivy-mcp/releases/download/v0.0.5/trivy-mcp-linux-arm64.tar.gz
+      bin: ./trivy-mcp
     - selector:
         os: darwin
         arch: amd64
-      uri: https://github.com/aquasecurity/trivy-mcp/releases/download/v0.0.4/trivy-mcp-darwin-amd64.tar.gz
+      uri: https://github.com/aquasecurity/trivy-mcp/releases/download/v0.0.5/trivy-mcp-darwin-amd64.tar.gz
       bin: ./trivy-mcp
     - selector:
         os: darwin
         arch: arm64
-      uri: https://github.com/aquasecurity/trivy-mcp/releases/download/v0.0.4/trivy-mcp-darwin-arm64.tar.gz
+      uri: https://github.com/aquasecurity/trivy-mcp/releases/download/v0.0.5/trivy-mcp-darwin-arm64.tar.gz
       bin: ./trivy-mcp
     - selector:
         os: windows
         arch: amd64
-      uri: https://github.com/aquasecurity/trivy-mcp/releases/download/v0.0.4/trivy-mcp-windows-amd64.tar.gz
+      uri: https://github.com/aquasecurity/trivy-mcp/releases/download/v0.0.5/trivy-mcp-windows-amd64.tar.gz
       bin: ./trivy-mcp
