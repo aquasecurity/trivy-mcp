@@ -59,4 +59,4 @@ bump-manifest:
 	@current_version=$$(cat plugin.yaml | grep 'version' | awk '{ print $$2}' | tr -d '"') ;\
 	echo Current version: $$current_version ;\
 	echo New version: $$NEW_VERSION ;\
-	$(SED) -i .bak -e "s/$$current_version/$$NEW_VERSION/g" plugin.yaml ;\
+	$(SED) -i -e "s/$$current_version/$$NEW_VERSION/g" plugin.yaml ;\
