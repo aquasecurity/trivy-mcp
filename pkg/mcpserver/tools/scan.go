@@ -67,7 +67,7 @@ func (t *TrivyTools) scanWithTrivyHandler(ctx context.Context, request mcp.CallT
 	}
 
 	logger := log.WithPrefix(targetType)
-	tempFile := filepath.Join(os.TempDir(), "trivy-plugin-mcp-scan.results.json")
+	tempFile := filepath.Join(os.TempDir(), "trivy-mcp-scan.results.json")
 	args := []string{
 		targetType,
 		fmt.Sprintf("--scanners=%s", strings.Join(scanTypeStr, ",")),

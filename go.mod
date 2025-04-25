@@ -1,4 +1,4 @@
-module github.com/aquasecurity/trivy-plugin-mcp
+module github.com/aquasecurity/trivy-mcp
 
 go 1.24.2
 

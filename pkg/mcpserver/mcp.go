@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/aquasecurity/trivy-plugin-mcp/pkg/flag"
-	"github.com/aquasecurity/trivy-plugin-mcp/pkg/mcpserver/tools"
-	"github.com/aquasecurity/trivy-plugin-mcp/pkg/version"
+	"github.com/aquasecurity/trivy-mcp/pkg/flag"
+	"github.com/aquasecurity/trivy-mcp/pkg/mcpserver/tools"
+	"github.com/aquasecurity/trivy-mcp/pkg/version"
 	"github.com/aquasecurity/trivy/pkg/log"
 	"github.com/mark3labs/mcp-go/server"
 )

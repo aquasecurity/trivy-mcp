@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/xerrors"
 
-	"github.com/aquasecurity/trivy-plugin-mcp/pkg/flag"
+	"github.com/aquasecurity/trivy-mcp/pkg/flag"
 	trivyflag "github.com/aquasecurity/trivy/pkg/flag"
 	"github.com/aquasecurity/trivy/pkg/log"
 )
