@@ -43,8 +43,7 @@ Now, we need to configure the server in VSCode to start using as an agent
 
 ### Configuring the plugin
 
-You can configure the Trivy mcp to start itself or us the sse http endpoint
-
+You can configure the Trivy mcp to start itself or use the sse http endpoint
 #### Configuring for stdio
 
 1. In VS Code, press `F1`
