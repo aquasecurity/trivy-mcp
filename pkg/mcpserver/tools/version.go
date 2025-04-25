@@ -36,7 +36,7 @@ func (t *TrivyTools) trivyVersionHandler(ctx context.Context, request mcp.CallTo
 		log.Error("Failed to get Trivy version", log.Err(err))
 		return nil, err
 	}
-	version := string(output)
+	version := strings.TrimSpace(string(output))
 	log.Info("Trivy version", log.String("version", version))
 
 	return mcp.NewToolResultText(version), nil
