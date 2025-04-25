@@ -1,11 +1,7 @@
 name: Lint
 
 on:
-  push:
-    tags:
-      - v*
   pull_request:
-  merge_group:
 
 permissions:
   contents: read
