@@ -1,0 +1,46 @@
+linters:
+  disable-all: true
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - bodyclose
+    - cyclop
+    - durationcheck
+    - errname
+    - errorlint
+    - copyloopvar
+    - goimports
+    - gocritic
+    - gosec
+    - gci
+
+linters-settings:
+  cyclop:
+    max-complexity: 20
+  gocritic:
+    disabled-checks:
+      - singleCaseSwitch
+  staticcheck:
+    checks:
+      - all
+      - '-SA1019' # TODO
+  gosec:
+    excludes:
+      - G115 # Potential integer overflow when converting between integer types
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(github.com/aquasecurity/)
+      - blank
+      - dot
+
+issues:
+  exclude-rules:
+    - path: "."
+      linters:
+        - typecheck

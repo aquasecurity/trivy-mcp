@@ -1,4 +1,4 @@
-package mcpserver
+package tools
 
 import (
 	"context"
