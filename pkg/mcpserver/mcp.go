@@ -1,7 +1,9 @@
 package mcpserver
 
 import (
+	"context"
 	"fmt"
+	"os"
 
 	"github.com/aquasecurity/trivy-plugin-mcp/pkg/flag"
 	"github.com/aquasecurity/trivy-plugin-mcp/pkg/mcpserver/tools"
@@ -47,15 +49,15 @@ func (m *McpServer) Start() error {
 	}
 
 	// Start the server
-	log.Info("Starting Trivy MCP server on port", log.Int("port", m.Port))
 
 	if m.Transport == "sse" {
+		log.Info("Starting Trivy MCP server on port", log.Int("port", m.Port))
 		s := server.NewSSEServer(m.Server, server.WithBaseURL(fmt.Sprintf("http://localhost:%d", m.Port)), server.WithKeepAlive(true))
 		return s.Start(fmt.Sprintf(":%d", m.Port))
-	} else {
-		if err := server.NewStdioServer(m.Server); err == nil {
-			return fmt.Errorf("failed to create Stdio server")
-		}
+	} else if m.Transport == "stdio" {
+		log.Info("Starting Trivy MCP server as stdio")
+		s := server.NewStdioServer(m.Server)
+		return s.Listen(context.Background(), os.Stdin, os.Stdout)
 	}
 	return nil
 }
