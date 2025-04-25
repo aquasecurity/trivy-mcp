@@ -10,6 +10,7 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/aquasecurity/trivy-mcp/pkg/flag"
+	"github.com/aquasecurity/trivy-mcp/pkg/version"
 	trivyflag "github.com/aquasecurity/trivy/pkg/flag"
 	"github.com/aquasecurity/trivy/pkg/log"
 )
@@ -61,6 +62,13 @@ The server can be configured to use different transports, such as SSE (Server-Se
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts, err := mcpFlags.ToOptions(args)
+
+			if opts.ShowVersion {
+				println("Trivy MCP Version: ", version.Version)
+				println("Trivy Version: ", version.TrivyVersion)
+				return nil
+			}
+
 			if err != nil {
 				return xerrors.Errorf("flag error: %w", err)
 			}

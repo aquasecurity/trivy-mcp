@@ -2,6 +2,6 @@ policy
 fanal
 windows
 
-trivy-mcp-*
+trivy-mcp*
 plugin.yaml.bak
 mcp
