@@ -42,12 +42,12 @@ func (m *McpServer) Start() error {
 
 	// Register the tools with the server
 	for _, tool := range m.Tools {
-		log.Infof("Registering tool: %s", tool.Tool.Name)
+		log.Info("Registering tool", log.String("tool", tool.Tool.Name))
 		m.Server.AddTool(tool.Tool, tool.Handler)
 	}
 
 	// Start the server
-	log.Infof("Starting Trivy MCP server on port :%d...", m.Port)
+	log.Info("Starting Trivy MCP server on port", log.Int("port", m.Port))
 
 	if m.Transport == "sse" {
 		s := server.NewSSEServer(m.Server, server.WithBaseURL(fmt.Sprintf("http://localhost:%d", m.Port)), server.WithKeepAlive(true))

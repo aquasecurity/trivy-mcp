@@ -17,115 +17,33 @@ import (
 	"golang.org/x/xerrors"
 )
 
-var scanFilesystemTool = mcp.NewTool("scan_filesystem",
-	mcp.WithDescription("Scan a project for vulnerabilities, misconfigurations, licenses, and secrets issue using Trivy"),
-	mcp.WithString("target",
-		mcp.Required(),
-		mcp.Description("The path to the project to scan"),
-	),
-	mcp.WithArray("scanType",
-		mcp.Required(),
-		mcp.Description("The type of scan to perform"),
-		mcp.Items(
-			map[string]interface{}{
-				"type":        "string",
-				"enum":        []string{"vuln", "misconfig", "license", "secret"},
-				"description": "The type of scan to perform",
-				"default":     "vuln",
-			},
-		),
-	),
-	mcp.WithArray("severities",
-		mcp.Description("The severity levels to include in the scan"),
-		mcp.Items(
-			map[string]interface{}{
-				"type":        "string",
-				"enum":        []string{"CRITICAL", "HIGH", "MEDIUM", "LOW", "UNKNOWN"},
-				"description": "The severity levels to include in the scan",
-				"default":     "CRITICAL",
-			},
-		),
-	),
-	mcp.WithString("targetType",
-		mcp.Required(),
-		mcp.Description("The type of target to scan"),
-		mcp.Enum("filesystem"),
-		mcp.DefaultString("filesystem"),
-	),
-)
+var (
+	scanFilesystemTool = mcp.NewTool(
+		"scan_filesystem",
+		mcp.WithDescription("Scan a project for vulnerabilities, misconfigurations, licenses, and secrets issue using Trivy"),
+		targetString,
+		scanTypeArray,
+		severityArray,
+		targetTypeString("filesystem"),
+	)
 
-var scanImageTool = mcp.NewTool("scan_image",
-	mcp.WithDescription("Scan a container image for vulnerabilities, misconfigurations, licenses, and secrets issue using Trivy"),
-	mcp.WithString("target",
-		mcp.Required(),
-		mcp.Description("The name of the image that you want to scan"),
-	),
-	mcp.WithArray("scanType",
-		mcp.Required(),
-		mcp.Description("The type of scan to perform"),
-		mcp.Items(
-			map[string]interface{}{
-				"type":        "string",
-				"enum":        []string{"vuln", "misconfig", "license", "secret"},
-				"description": "The type of scan to perform",
-				"default":     "vuln",
-			},
-		),
-	),
-	mcp.WithArray("severities",
-		mcp.Description("The severity levels to include in the scan"),
-		mcp.Items(
-			map[string]interface{}{
-				"type":        "string",
-				"enum":        []string{"CRITICAL", "HIGH", "MEDIUM", "LOW", "UNKNOWN"},
-				"description": "The severity levels to include in the scan",
-				"default":     "CRITICAL",
-			},
-		),
-	),
-	mcp.WithString("targetType",
-		mcp.Required(),
-		mcp.Description("The type of target to scan"),
-		mcp.Enum("filesystem", "image"),
-		mcp.DefaultString("image"),
-	),
-)
+	scanImageTool = mcp.NewTool(
+		"scan_image",
+		mcp.WithDescription("Scan a container image for vulnerabilities, misconfigurations, licenses, and secrets issue using Trivy"),
+		targetString,
+		scanTypeArray,
+		severityArray,
+		targetTypeString("image"),
+	)
 
-var scanRepositoryTool = mcp.NewTool("scan_repository",
-	mcp.WithDescription("Scan a remote git repository for vulnerabilities, misconfigurations, licenses, and secrets issue using Trivy"),
-	mcp.WithString("target",
-		mcp.Required(),
-		mcp.Description("The name of the image that you want to scan"),
-	),
-	mcp.WithArray("scanType",
-		mcp.Required(),
-		mcp.Description("The type of scan to perform"),
-		mcp.Items(
-			map[string]interface{}{
-				"type":        "string",
-				"enum":        []string{"vuln", "misconfig", "license", "secret"},
-				"description": "The type of scan to perform",
-				"default":     "vuln",
-			},
-		),
-	),
-	mcp.WithArray("severities",
-		mcp.Description("The severity levels to include in the scan"),
-		mcp.Items(
-			map[string]interface{}{
-				"type":        "string",
-				"enum":        []string{"CRITICAL", "HIGH", "MEDIUM", "LOW", "UNKNOWN"},
-				"description": "The severity levels to include in the scan",
-				"default":     "CRITICAL",
-			},
-		),
-	),
-	mcp.WithString("targetType",
-		mcp.Required(),
-		mcp.Description("The type of target to scan"),
-		mcp.Enum("filesystem", "image", "repository"),
-		mcp.DefaultString("repository"),
-	),
+	scanRepositoryTool = mcp.NewTool(
+		"scan_repository",
+		mcp.WithDescription("Scan a remote git repository for vulnerabilities, misconfigurations, licenses, and secrets issue using Trivy"),
+		targetString,
+		scanTypeArray,
+		severityArray,
+		targetTypeString("repository"),
+	)
 )
 
 func (t *TrivyTools) scanWithTrivyHandler(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -162,7 +80,7 @@ func (t *TrivyTools) scanWithTrivyHandler(ctx context.Context, request mcp.CallT
 		args = append(args, "--debug")
 	}
 
-	// finally, add the target
+	// finally, add the target to the arguments
 	args = append(args, target)
 
 	logger.Debug("Trivy scan arguments", log.Any("args", args))
@@ -203,11 +121,6 @@ func (t *TrivyTools) scanWithTrivyHandler(ctx context.Context, request mcp.CallT
 		return nil, xerrors.Errorf("json decode error: %w", err)
 	}
 
-	if len(r.Results) == 0 {
-		logger.Info("No vulnerabilities found")
-		return mcp.NewToolResultText("No vulnerabilities found"), nil
-	}
-
 	sb := strings.Builder{}
 	var totalCount int
 
@@ -221,6 +134,9 @@ func (t *TrivyTools) scanWithTrivyHandler(ctx context.Context, request mcp.CallT
 
 	}
 
+	// Check if the total count of vulnerabilities is greater than 100 - this is a
+	// fairly arbitrary number, but it is a good starting point for limiting the output
+	// to a manageable size. The LLM can only handle a limited amount of data, so we need to summarise the results
 	if totalCount > 100 {
 		sb.WriteString("Scan results are too large to display, summarising.\n")
 		for _, result := range r.Results {
@@ -231,10 +147,8 @@ func (t *TrivyTools) scanWithTrivyHandler(ctx context.Context, request mcp.CallT
 			sb.WriteString("  - Secrets: " + fmt.Sprint(len(result.Secrets)) + "\n")
 		}
 		sb.WriteString(fmt.Sprintf("Total vulnerabilities: %d\n", totalCount))
-		sb.WriteString("Please refer to the full report for more details.\n")
-
 	} else {
-		sb.WriteString("The IDs are relevant information so please include them in the output.\n")
+		sb.WriteString("The ID and Severity are relevant information so please include them in the output.\n")
 		sb.WriteString("Scan results:\n")
 		sb.WriteString(fmt.Sprintf("Total vulnerabilities: %d\n", totalCount))
 
@@ -261,5 +175,4 @@ func (t *TrivyTools) scanWithTrivyHandler(ctx context.Context, request mcp.CallT
 	}
 
 	return mcp.NewToolResultText(sb.String()), nil
-
 }
