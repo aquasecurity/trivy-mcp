@@ -6,9 +6,6 @@ on:
     tags:
       - "v*"
 
-env:
-  GO_VERSION: '1.22'
-
 jobs:
   release:
     runs-on: ubuntu-latest

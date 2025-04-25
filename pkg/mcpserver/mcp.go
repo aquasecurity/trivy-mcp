@@ -5,6 +5,7 @@ import (
 
 	"github.com/aquasecurity/trivy-plugin-mcp/pkg/flag"
 	"github.com/aquasecurity/trivy-plugin-mcp/pkg/mcpserver/tools"
+	"github.com/aquasecurity/trivy-plugin-mcp/pkg/version"
 	"github.com/aquasecurity/trivy/pkg/log"
 	"github.com/mark3labs/mcp-go/server"
 )
@@ -23,7 +24,7 @@ type McpServer struct {
 func NewMcpServer(opts flag.Options) *McpServer {
 	s := server.NewMCPServer(
 		"Trivy MCP Server 🚀",
-		"0.0.0",
+		version.Version,
 	)
 
 	th := tools.NewTrivyTools(opts)

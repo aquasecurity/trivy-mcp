@@ -2,3 +2,5 @@ policy
 fanal
 
 trivy-plugin-mcp-*
+plugin.yaml.bak
+mcp
