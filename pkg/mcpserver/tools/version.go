@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"os/exec"
+	"strings"
 
 	"github.com/aquasecurity/trivy/pkg/log"
 	"github.com/mark3labs/mcp-go/mcp"
