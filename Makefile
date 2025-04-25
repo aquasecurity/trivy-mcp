@@ -1,28 +1,28 @@
 SED=$(shell command -v gsed || command -v sed)
 PLATFORMS = linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64
-OUTPUTS = $(patsubst %,%/trivy-plugin-mcp,$(PLATFORMS))
+OUTPUTS = $(patsubst %,%/trivy-mcp,$(PLATFORMS))
 
 .PHONY: clean
 clean:
-	rm -rf trivy-plugin-mcp*
+	rm -rf trivy-mcp*
 
 .PHONY: build
 build: clean $(OUTPUTS)
 
-%/trivy-plugin-mcp:
+%/trivy-mcp:
 	@[ $$NEW_VERSION ] || ( echo "env 'NEW_VERSION' is not set"; exit 1 )
 	@echo "Building for $*..."
 	@mkdir -p $(dir $@); \
 	GOOS=$(word 1,$(subst /, ,$*)); \
 	GOARCH=$(word 2,$(subst /, ,$*)); \
-	CGO_ENABLED=0 GOOS=$$GOOS GOARCH=$$GOARCH go build -ldflags "-s -w -X github.com/aquasecurity/trivy-plugin-mcp/pkg/version.Version=$${NEW_VERSION}" -o mcp ./cmd/trivy-mcp/main.go; \
+	CGO_ENABLED=0 GOOS=$$GOOS GOARCH=$$GOARCH go build -ldflags "-s -w -X github.com/aquasecurity/trivy-mcp/pkg/version.Version=$${NEW_VERSION}" -o trivy-mcp ./cmd/trivy-mcp/main.go; \
 	if [ $$GOOS = "windows" ]; then \
-		mv mcp mcp.exe; \
-		tar -czf trivy-plugin-mcp-$$GOOS-$$GOARCH.tar.gz plugin.yaml mcp.exe LICENSE > /dev/null; \
-		rm mcp.exe; \
+		mv trivy-mcp trivy-mcp.exe; \
+		tar -czf trivy-mcp-$$GOOS-$$GOARCH.tar.gz plugin.yaml trivy-mcp.exe LICENSE > /dev/null; \
+		rm trivy-mcp.exe; \
 	else \
-		tar -czf trivy-plugin-mcp-$$GOOS-$$GOARCH.tar.gz plugin.yaml mcp LICENSE > /dev/null; \
-		rm mcp; \
+		tar -czf trivy-mcp-$$GOOS-$$GOARCH.tar.gz plugin.yaml trivy-mcp LICENSE > /dev/null; \
+		rm trivy-mcp; \
 	fi
 
 .PHONY: add-plugin-manifest

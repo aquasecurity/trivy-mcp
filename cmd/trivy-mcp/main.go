@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/aquasecurity/trivy-plugin-mcp/pkg/commands"
+	"github.com/aquasecurity/trivy-mcp/pkg/commands"
 	"github.com/aquasecurity/trivy/pkg/log"
 )
 

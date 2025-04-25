@@ -36,6 +36,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            trivy-plugin-mcp-*.tar.gz
+            trivy-mcp-*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

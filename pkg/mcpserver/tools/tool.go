@@ -3,7 +3,7 @@ package tools
 import (
 	"context"
 
-	"github.com/aquasecurity/trivy-plugin-mcp/pkg/flag"
+	"github.com/aquasecurity/trivy-mcp/pkg/flag"
 	"github.com/aquasecurity/trivy/pkg/log"
 	"github.com/mark3labs/mcp-go/mcp"
 )
