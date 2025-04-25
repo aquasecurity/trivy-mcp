@@ -168,9 +168,22 @@ func (t *TrivyTools) scanWithTrivyHandler(ctx context.Context, request mcp.CallT
 				sb.WriteString("    Description: " + misconfig.Description + "\n")
 				sb.WriteString("    Message: " + misconfig.Message + "\n")
 				sb.WriteString("    Resolution: " + misconfig.Resolution + "\n")
-				sb.WriteString("    Status: " + string(misconfig.Status) + "\n")
 			}
-
+			for _, license := range result.Licenses {
+				sb.WriteString("  - ID: " + license.Name + "\n")
+				sb.WriteString("    Severity: " + license.Severity + "\n")
+				sb.WriteString("    Description: " + license.Text + "\n")
+				sb.WriteString("    Confidence: " + fmt.Sprint(license.Confidence) + "\n")
+				sb.WriteString("	Package Name: " + license.PkgName + "\n")
+				sb.WriteString("    Link: " + license.Link + "\n")
+			}
+			for _, secret := range result.Secrets {
+				sb.WriteString("  - ID: " + secret.RuleID + "\n")
+				sb.WriteString("    Severity: " + secret.Severity + "\n")
+				sb.WriteString("    Matched String: " + secret.Match + "\n")
+				sb.WriteString("    Message: " + string(secret.Category) + "\n")
+				sb.WriteString("    Title: " + secret.Title + "\n")
+			}
 		}
 	}
 
