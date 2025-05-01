@@ -5,3 +5,6 @@ windows
 trivy-mcp*
 plugin.yaml.bak
 mcp
+
+.env
+.history
