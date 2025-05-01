@@ -96,8 +96,7 @@ func (c *AquaCreds) obtainJWT() (string, error) {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		msg := fmt.Sprintf("failed sending jwt request token with error: %v", err)
-		return "", errors.New(msg)
+		return "", fmt.Errorf("failed sending jwt request token with error: %w", err)
 	}
 
 	defer func() { _ = resp.Body.Close() }()
@@ -125,8 +124,7 @@ func computeHmac256(message string, secret string) (string, error) {
 	h := hmac.New(sha256.New, key)
 	_, err := h.Write([]byte(message))
 	if err != nil {
-		msg := fmt.Sprintf("failed writing hmac: %v", err)
-		return "", errors.New(msg)
+		return "", fmt.Errorf("failed writing hmac: %w", err)
 	}
 	return hex.EncodeToString(h.Sum(nil)), nil
 }

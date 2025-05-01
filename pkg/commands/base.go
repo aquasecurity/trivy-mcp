@@ -1,3 +1,4 @@
+// Package commands provides the command line interface for the trivy-mcp plugin
 package commands
 
 import (
@@ -9,8 +10,8 @@ import (
 	"github.com/aquasecurity/trivy/pkg/log"
 )
 
-func NewCmd() *cobra.Command {
-
+// rootCommand creates and returns a base cobra command with shared functionality
+func rootCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "mcp [flags]",
 		Aliases: []string{},
@@ -26,7 +27,6 @@ The server can be configured to use different transports, such as SSE (Server-Se
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			opts := flag.ToOptions()
-			// Initialize logger
 			log.InitLogger(opts.Debug, opts.Quiet)
 			return nil
 		},
@@ -44,11 +44,6 @@ The server can be configured to use different transports, such as SSE (Server-Se
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
-
-	// TODO: Enable the auth command
-	//cmd.AddCommand(NewAuthCommand())
-	flag.AddBaseFlags(cmd)
-	flag.AddMcpFlags(cmd)
 
 	return cmd
 }
