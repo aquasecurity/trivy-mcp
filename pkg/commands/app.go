@@ -45,7 +45,8 @@ The server can be configured to use different transports, such as SSE (Server-Se
 		SilenceUsage:  true,
 	}
 
-	cmd.AddCommand(NewAuthCommand())
+	// TODO: Enable the auth command
+	//cmd.AddCommand(NewAuthCommand())
 	flag.AddBaseFlags(cmd)
 	flag.AddMcpFlags(cmd)
 
