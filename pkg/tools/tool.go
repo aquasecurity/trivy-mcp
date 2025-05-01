@@ -14,8 +14,9 @@ type TrivyTool struct {
 }
 
 type TrivyTools struct {
-	trivyBinary string
-	debug       bool
+	trivyBinary     string
+	debug           bool
+	useAquaPlatform bool
 }
 
 func NewTrivyTools(opts flag.Options) *TrivyTools {
@@ -24,8 +25,9 @@ func NewTrivyTools(opts flag.Options) *TrivyTools {
 	}
 
 	return &TrivyTools{
-		trivyBinary: opts.TrivyBinary,
-		debug:       opts.Debug,
+		trivyBinary:     opts.TrivyBinary,
+		debug:           opts.Debug,
+		useAquaPlatform: opts.UseAquaPlatform,
 	}
 }
 

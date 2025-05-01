@@ -2,6 +2,8 @@ package tools
 
 import "github.com/mark3labs/mcp-go/mcp"
 
+// this file contains the reusable set of arguments to be used by trivy tools
+
 var targetString = mcp.WithString("target",
 	mcp.Required(),
 	mcp.Description("The path to the project to scan"),

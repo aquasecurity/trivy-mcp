@@ -11,15 +11,15 @@ build: clean $(OUTPUTS)
 %/trivy-mcp:
 	@[ $$NEW_VERSION ] || ( echo "env 'NEW_VERSION' is not set"; exit 1 );
 	@trivy_version=$$(cat go.mod | grep 'github.com/aquasecurity/trivy v' | awk '{print $$2}'); \
-	echo Current trivy version: $$trivy_version; \
 	if [ -z "$$trivy_version" ]; then \
 		echo "Trivy version not found in go.mod"; \
 		exit 1; \
 	fi; \
+	echo Current trivy version: $$trivy_version; \
 	echo "Building for $*..."; \
 	GOOS=$(word 1,$(subst /, ,$*)); \
 	GOARCH=$(word 2,$(subst /, ,$*)); \
-	CGO_ENABLED=0 GOOS=$$GOOS GOARCH=$$GOARCH go build -ldflags "-s -w -X github.com/aquasecurity/trivy-mcp/pkg/version.Version=$${NEW_VERSION} -X github.com/aquasecurity/trivy-mcp/pkg/version.TrivyVersion=$${trivy_version}" -o trivy-mcp ./cmd/trivy-mcp/main.go; \
+	CGO_ENABLED=0 GOOS=$$GOOS GOARCH=$$GOARCH go build -ldflags "-s -w -X github.com/aquasecurity/trivy-mcp/pkg/version.Version=v$${NEW_VERSION} -X github.com/aquasecurity/trivy-mcp/pkg/version.TrivyVersion=$${trivy_version}" -o trivy-mcp ./cmd/trivy-mcp/main.go; \
 	if [ $$GOOS = "windows" ]; then \
 		mv trivy-mcp trivy-mcp.exe; \
 		tar -czf trivy-mcp-$$GOOS-$$GOARCH.tar.gz plugin.yaml trivy-mcp.exe LICENSE > /dev/null; \
