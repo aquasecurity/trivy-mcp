@@ -1,81 +1,53 @@
 package flag
 
-import (
-	trivyflag "github.com/aquasecurity/trivy/pkg/flag"
-	"golang.org/x/xerrors"
-)
+import "github.com/spf13/cobra"
 
 var (
-	transportFlag = trivyflag.Flag[string]{
-		Name:       "transport",
-		Shorthand:  "t",
-		ConfigName: "mcp.transport",
-		Usage:      "Transport to use for the connection",
-		Default:    "stdio",
-		Values:     []string{"sse", "stdio"},
-	}
-	ssePortFlag = trivyflag.Flag[int]{
-		Name:       "port",
-		ConfigName: "mcp.port",
-		Usage:      "sse port to use for the connection",
-		Shorthand:  "p",
-		Default:    23456,
-	}
-	trivyBinaryFlag = trivyflag.Flag[string]{
-		Name:       "trivy-binary",
-		ConfigName: "trivy.binary",
-		Usage:      "Path to the Trivy binary",
-	}
+	showVersion bool
+	debug       bool
+	// mcp flags
+	transport       string
+	port            int
+	trivyBinary     string
+	useAquaPlatform bool
+
+	// login flags
+	aquaKey    string
+	aquaSecret string
+	aquaRegion string
+	clear      bool
 )
 
-type McpFlagGroup struct {
-	Transport   *trivyflag.Flag[string]
-	SSEPort     *trivyflag.Flag[int]
-	TrivyBinary *trivyflag.Flag[string]
+func AddBaseFlags(cmd *cobra.Command) {
+	cmd.PersistentFlags().BoolVarP(&showVersion, "version", "v", false, "Show version")
+	cmd.Flags().BoolVarP(&debug, "debug", "d", false, "Enable debug mode")
 }
 
-type McpOptions struct {
-	Transport   string
-	SSEPort     int
-	TrivyBinary string
+func AddLoginFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&aquaKey, "aqua-key", "", "Aqua key")
+	cmd.Flags().StringVar(&aquaSecret, "aqua-secret", "", "Aqua secret")
+	cmd.Flags().StringVar(&aquaRegion, "aqua-region", "", "Aqua region (US, EU, Singapore, Sydney, Dev)")
+	cmd.Flags().BoolVar(&clear, "clear", false, "Clear the saved credentials")
 }
 
-func NewMcpFlagGroup() *McpFlagGroup {
-	return &McpFlagGroup{
-		Transport:   transportFlag.Clone(),
-		SSEPort:     ssePortFlag.Clone(),
-		TrivyBinary: trivyBinaryFlag.Clone(),
+func ToOptions() Options {
+	return Options{
+		Debug:       debug,
+		Quiet:       false,
+		ShowVersion: showVersion,
+
+		Transport:       transport,
+		SSEPort:         port,
+		TrivyBinary:     trivyBinary,
+		UseAquaPlatform: useAquaPlatform,
 	}
 }
 
-func (f *McpFlagGroup) Name() string {
-	return "MCP Server"
-}
-
-func (f *McpFlagGroup) Flags() []trivyflag.Flagger {
-	return []trivyflag.Flagger{
-		f.Transport,
-		f.SSEPort,
-		f.TrivyBinary,
+func ToLoginOptions() LoginOptions {
+	return LoginOptions{
+		AquaKey:    aquaKey,
+		AquaSecret: aquaSecret,
+		AquaRegion: aquaRegion,
+		Clear:      clear,
 	}
-}
-
-func (f *McpFlagGroup) ToOptions() (McpOptions, error) {
-	if err := parseFlags(f); err != nil {
-		return McpOptions{}, err
-	}
-	return McpOptions{
-		Transport:   f.Transport.Value(),
-		SSEPort:     f.SSEPort.Value(),
-		TrivyBinary: f.TrivyBinary.Value(),
-	}, nil
-}
-
-func parseFlags(fg trivyflag.FlagGroup) error {
-	for _, flag := range fg.Flags() {
-		if err := flag.Parse(); err != nil {
-			return xerrors.Errorf("unable to parse flag: %w", err)
-		}
-	}
-	return nil
 }

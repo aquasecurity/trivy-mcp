@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/aquasecurity/trivy-mcp/internal/creds"
 	"github.com/aquasecurity/trivy/pkg/commands"
 	"github.com/aquasecurity/trivy/pkg/log"
 	"github.com/aquasecurity/trivy/pkg/types"
@@ -20,16 +21,19 @@ import (
 var (
 	scanFilesystemTool = mcp.NewTool(
 		"scan_filesystem",
-		mcp.WithDescription("Scan a project for vulnerabilities, misconfigurations, licenses, and secrets issue using Trivy"),
+		mcp.WithDescription("Scan a local filesystem project for vulnerabilities, misconfigurations, licenses, and secrets issue using Trivy. Trivy returns the results in JSON format, but the handler of the tool will format the results in a human-readable format similar to yaml."),
 		targetString,
 		scanTypeArray,
 		severityArray,
 		targetTypeString("filesystem"),
+		mcp.WithToolAnnotation(mcp.ToolAnnotation{
+			Title: "Scan filesystem and local projects with Trivy",
+		}),
 	)
 
 	scanImageTool = mcp.NewTool(
 		"scan_image",
-		mcp.WithDescription("Scan a container image for vulnerabilities, misconfigurations, licenses, and secrets issue using Trivy"),
+		mcp.WithDescription("Scan a container image for vulnerabilities, misconfigurations, licenses, and secrets issue using Trivy. Trivy returns the results in JSON format, but the handler of the tool will format the results in a human-readable format similar to yaml"),
 		targetString,
 		scanTypeArray,
 		severityArray,
@@ -38,7 +42,7 @@ var (
 
 	scanRepositoryTool = mcp.NewTool(
 		"scan_repository",
-		mcp.WithDescription("Scan a remote git repository for vulnerabilities, misconfigurations, licenses, and secrets issue using Trivy"),
+		mcp.WithDescription("Scan a remote git repository for vulnerabilities, misconfigurations, licenses, and secrets issue using Trivy. Trivy returns the results in JSON format, but the handler of the tool will format the results in a human-readable format similar to yaml"),
 		targetString,
 		scanTypeArray,
 		severityArray,
@@ -66,15 +70,27 @@ func (t *TrivyTools) scanWithTrivyHandler(ctx context.Context, request mcp.CallT
 		scanTypeStr[i] = st.(string)
 	}
 
-	logger := log.WithPrefix(targetType)
-	tempFile := filepath.Join(os.TempDir(), "trivy-mcp-scan.results.json")
 	args := []string{
 		targetType,
 		fmt.Sprintf("--scanners=%s", strings.Join(scanTypeStr, ",")),
 		fmt.Sprintf("--severity=%s", strings.Join(severitiesStr, ",")),
-		fmt.Sprintf("--output=%s", tempFile),
 		"--format=json",
 	}
+
+	// aquaPlatform only supports filesystem scans at the moment
+	if t.useAquaPlatform && targetType == "filesystem" {
+		aquaCreds, err := creds.Load()
+		if err != nil {
+			return nil, fmt.Errorf("failed to load credentials which suggests the haven't been saved using `trivy mcp auth`: %v", err)
+		}
+		args = append(args, target)
+		return t.scanWithAquaPlatform(ctx, args, *aquaCreds)
+	}
+
+	logger := log.WithPrefix(targetType)
+	tempFile := filepath.Join(os.TempDir(), "trivy-mcp-scan.results.json")
+
+	args = append(args, "--output", tempFile)
 
 	if t.debug {
 		args = append(args, "--debug")

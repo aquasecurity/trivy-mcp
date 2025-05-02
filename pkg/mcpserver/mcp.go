@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/aquasecurity/trivy-mcp/internal/creds"
 	"github.com/aquasecurity/trivy-mcp/pkg/flag"
-	"github.com/aquasecurity/trivy-mcp/pkg/mcpserver/tools"
+	"github.com/aquasecurity/trivy-mcp/pkg/tools"
 	"github.com/aquasecurity/trivy-mcp/pkg/version"
 	"github.com/aquasecurity/trivy/pkg/log"
 	"github.com/mark3labs/mcp-go/server"
@@ -24,6 +25,23 @@ type McpServer struct {
 }
 
 func NewMcpServer(opts flag.Options) *McpServer {
+
+	if opts.UseAquaPlatform {
+		aquaCreds, err := creds.Load()
+		if err != nil {
+			log.Warn("Failed to load aqua credentials, not using Aqua Platform")
+			opts.UseAquaPlatform = false
+		} else {
+			if err := aquaCreds.Verify(); err != nil {
+				log.Warn("Failed to verify aqua credentials, not using Aqua Platform")
+				opts.UseAquaPlatform = false
+			} else {
+				log.Info("Aqua credentials loaded and verified successfully")
+			}
+		}
+
+	}
+
 	s := server.NewMCPServer(
 		"Trivy MCP Server 🚀",
 		version.Version,
