@@ -21,7 +21,7 @@ type McpServer struct {
 	// Port is the port to listen on
 	Port int
 	// Tools is the list of tools to register with the server
-	Tools []tools.TrivyTool
+	Tools *tools.TrivyTools
 }
 
 func NewMcpServer(opts flag.Options) *McpServer {
@@ -53,7 +53,7 @@ func NewMcpServer(opts flag.Options) *McpServer {
 		Server:    s,
 		Transport: opts.Transport,
 		Port:      opts.SSEPort,
-		Tools:     th.GetTools(),
+		Tools:     th,
 	}
 
 }
@@ -61,21 +61,28 @@ func NewMcpServer(opts flag.Options) *McpServer {
 func (m *McpServer) Start() error {
 
 	// Register the tools with the server
-	for _, tool := range m.Tools {
+	for _, tool := range m.Tools.GetTools() {
 		log.Info("Registering tool", log.String("tool", tool.Tool.Name))
 		m.Server.AddTool(tool.Tool, tool.Handler)
 	}
 
 	// Start the server
-
-	if m.Transport == "sse" {
+	switch m.Transport {
+	case "sse":
 		log.Info("Starting Trivy MCP server on port", log.Int("port", m.Port))
 		s := server.NewSSEServer(m.Server, server.WithBaseURL(fmt.Sprintf("http://localhost:%d", m.Port)), server.WithKeepAlive(true))
 		return s.Start(fmt.Sprintf(":%d", m.Port))
-	} else if m.Transport == "stdio" {
+	case "stdio":
 		log.Info("Starting Trivy MCP server as stdio")
 		s := server.NewStdioServer(m.Server)
 		return s.Listen(context.Background(), os.Stdin, os.Stdout)
+	default:
+		return nil
 	}
-	return nil
+}
+
+func (m *McpServer) Cleanup() {
+	if m.Tools != nil {
+		m.Tools.Cleanup()
+	}
 }

@@ -1,16 +1,33 @@
-package tools
+package version
 
 import (
 	"context"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
+	"github.com/aquasecurity/trivy-mcp/pkg/flag"
 	"github.com/aquasecurity/trivy-mcp/pkg/version"
 	"github.com/aquasecurity/trivy/pkg/log"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
-var trivyVersionTool = mcp.NewTool("trivy_version",
+type VersionTools struct {
+	trivyBinary  string
+	debug        bool
+	trivyTempDir string
+}
+
+func NewVersionTools(opts flag.Options, trivyTempDir string) *VersionTools {
+	return &VersionTools{
+		trivyBinary:  opts.TrivyBinary,
+		debug:        opts.Debug,
+		trivyTempDir: filepath.Join(os.TempDir(), "trivy"),
+	}
+}
+
+var TrivyVersionTool = mcp.NewTool("trivy_version",
 	mcp.WithDescription("Get the version of Trivy"),
 )
 
@@ -18,7 +35,7 @@ var trivyVersionTool = mcp.NewTool("trivy_version",
 // at build time, the version is scraped from the go.mod, so it should be a true reflection of which trivy code version is being used
 // If the trivy binary is specified, it will run the command `trivy --version` to get the version
 // of the trivy binary that is being used
-func (t *TrivyTools) trivyVersionHandler(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func (t *VersionTools) TrivyVersionHandler(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	log.Info("Getting Trivy version...")
 	ver := version.TrivyVersion
 

@@ -21,6 +21,8 @@ linters:
 linters-settings:
   cyclop:
     max-complexity: 20
+  govet:
+    check-shadowing: true
   gocritic:
     disabled-checks:
       - singleCaseSwitch
