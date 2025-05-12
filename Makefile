@@ -57,17 +57,17 @@ install-plugin: add-plugin-manifest
 	go build -ldflags "-s -w -X github.com/aquasecurity/trivy-mcp/pkg/version.TrivyVersion=$${trivy_version}" -o ~/.trivy/plugins/mcp/trivy-mcp ./cmd/trivy-mcp/main.go;
 	@echo "Plugin installed successfully."
 
-# Install plugin with Aqua support
-.PHONY: install-plugin-aqua
-install-plugin-aqua:
-	$(MAKE) install-plugin BUILDTAGS=aqua
-
 .PHONY: run
 run:
 	@trivy_version=$$(cat go.mod | grep 'github.com/aquasecurity/trivy v' | awk '{ print $$2}') ;\
 	echo Current trivy version: $$trivy_version ;\
 	go build  -ldflags "-s -w -X github.com/aquasecurity/trivy-mcp/pkg/version.TrivyVersion=$${trivy_version}" -o trivy-mcp ./cmd/trivy-mcp/main.go;
 	@./trivy-mcp help
+
+.PHONY: format
+format:
+	@echo "Running gofmt..."
+	@gofmt -w -s -d .  
 
 .PHONY: lint
 lint:

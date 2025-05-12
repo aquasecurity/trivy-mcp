@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/aquasecurity/trivy-mcp/pkg/flag"
+	"github.com/aquasecurity/trivy-mcp/pkg/version"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,7 +20,7 @@ func TestVersionHandler(t *testing.T) {
 		{
 			name:        "Trivy Binary Not Specified",
 			trivyBinary: "",
-			expected:    "v0.62.0",
+			expected:    version.TrivyVersion,
 		},
 	}
 

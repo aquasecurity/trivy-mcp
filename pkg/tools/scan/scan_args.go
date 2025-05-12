@@ -23,7 +23,7 @@ var (
 	availableSeverities = []string{"CRITICAL", "HIGH", "MEDIUM", "LOW", "UNKNOWN"}
 	defaultSeverity     = "CRITICAL"
 
-	availableOutputFormats = []string{"json", "table", "template", "cyclonedx", "spdx", "spdx-json"}
+	availableOutputFormats = []string{"json", "cyclonedx", "spdx", "spdx-json"}
 	defaultOutputFormat    = "json"
 )
 
@@ -59,7 +59,9 @@ var severityArray = mcp.WithArray("severities",
 
 var outputFormatString = mcp.WithString("outputFormat",
 	mcp.Required(),
-	mcp.Description("The format of the output. When generating an SBOM report you can use either cyclonedx or spdx. For sbom, prefer cyclonedx. If the user requests spdx, use spdx rather than spdx-json."),
+	mcp.Description(`The format of the output which should normally be json. \n
+	When generating an SBOM report you can use either cyclonedx or spdx. For sbom, prefer cyclonedx. \n
+	If the user requests spdx, use spdx rather than spdx-json.`),
 	mcp.Enum(availableOutputFormats...),
 	mcp.DefaultString(defaultOutputFormat),
 )
