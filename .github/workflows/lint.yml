@@ -19,6 +19,14 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Check formatting
+        run: |
+          make format
+          if ! git diff --exit-code; then
+            echo "Files are not formatted correctly. Run 'make format' locally and commit changes."
+            exit 1
+          fi
+
       - uses: golangci/golangci-lint-action@v6
         with:
           version: v1.64.2

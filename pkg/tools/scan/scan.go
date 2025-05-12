@@ -2,7 +2,6 @@ package scan
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -15,7 +14,6 @@ import (
 	"github.com/aquasecurity/trivy-mcp/pkg/flag"
 	"github.com/aquasecurity/trivy/pkg/commands"
 	"github.com/aquasecurity/trivy/pkg/log"
-	"github.com/aquasecurity/trivy/pkg/types"
 	"github.com/mark3labs/mcp-go/mcp"
 
 	_ "modernc.org/sqlite" // sqlite driver for RPM DB and Java DB
@@ -33,7 +31,7 @@ func NewScanTools(opts flag.Options, trivyTempDir string) *ScanTools {
 		trivyBinary:     opts.TrivyBinary,
 		debug:           opts.Debug,
 		useAquaPlatform: opts.UseAquaPlatform,
-		trivyTempDir:    filepath.Join(os.TempDir(), "trivy"),
+		trivyTempDir:    trivyTempDir,
 	}
 }
 
@@ -162,54 +160,30 @@ func (t *ScanTools) ScanWithTrivyHandler(ctx context.Context, request mcp.CallTo
 		return result, nil
 	}
 
-	f, err := os.Open(resultsFilePath)
-	if err != nil {
-		logger.Error("Failed to open scan results file", log.Err(err))
-		return nil, errors.New("failed to open scan results file")
-	}
-
 	defer func() {
-		if err := f.Close(); err != nil {
-			logger.Error("Failed to close scan results file", log.Err(err))
-		}
 		if err := os.Remove(resultsFilePath); err != nil {
-			logger.Error("Failed to remove scan results file", log.Err(err))
+			logger.Error("Failed to remove results file", log.Err(err))
 		}
-		logger.Debug("Scan results file removed", log.String("file", resultsFilePath))
 	}()
 
-	var r types.Report
-	if err = json.NewDecoder(f).Decode(&r); err != nil {
-		logger.Error("Failed to decode scan results", log.Err(err))
-		return nil, fmt.Errorf("failed to decode scan results: %w", err)
-	}
-
-	var totalCount int
-	for _, result := range r.Results {
-		totalCount += len(result.Vulnerabilities) + len(result.Misconfigurations) + len(result.Licenses) + len(result.Secrets)
-	}
-
-	if totalCount == 0 {
-		return mcp.NewToolResultText("No vulnerabilities found\n"), nil
-	}
-
-	var output string
-
-	// 100 is an arbitrary number, but it seems to be a good threshold for the amount of data to display
-	// we can tune this, but we need to be careful about the context window size and not overloading the results
-	if totalCount > 100 {
-		output, err = executeTemplate(summaryTemplate, r.Results)
-	} else {
-		output, err = executeTemplate(resultTemplate, r.Results)
-	}
+	content, err := os.ReadFile(resultsFilePath)
 	if err != nil {
-		logger.Error("Failed to format results", log.Err(err))
-		return nil, fmt.Errorf("failed to format results: %w", err)
+		logger.Error("Failed to read scan results file", log.Err(err))
+		return nil, errors.New("failed to read scan results file")
 	}
 
-	return mcp.NewToolResultText(output), nil
+	return mcp.NewToolResultResource(
+		"The embedded resource is a human readable JSON format and found at the filepath that can be further processed.",
+		mcp.TextResourceContents{
+			URI:  resultsFilePath,
+			Text: string(content),
+		},
+	), nil
 }
 
+// processSBOMResult processes the SBOM result and returns a tool result
+// we don't clean up the results file here because we want to keep it to be available for the LLM to provide a link
+// when the MCP server is closed, the trivy mcp cache should be cleaned up
 func (*ScanTools) processSBOMResult(resultsFilePath string, logger *log.Logger, filename string) (*mcp.CallToolResult, error) {
 	log.Debug("Scan results file", log.String("file", resultsFilePath))
 
