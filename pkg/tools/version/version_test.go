@@ -1,4 +1,4 @@
-package tools
+package version
 
 import (
 	"context"
@@ -19,7 +19,7 @@ func TestVersionHandler(t *testing.T) {
 		{
 			name:        "Trivy Binary Not Specified",
 			trivyBinary: "",
-			expected:    "dev",
+			expected:    "v0.62.0",
 		},
 	}
 
@@ -30,13 +30,13 @@ func TestVersionHandler(t *testing.T) {
 				TrivyBinary: tt.trivyBinary,
 			}
 
-			trivyTool := NewTrivyTools(opts)
-			result, err := trivyTool.trivyVersionHandler(context.Background(), mcp.CallToolRequest{})
+			trivyTool := NewVersionTools(opts, t.TempDir())
+			result, err := trivyTool.TrivyVersionHandler(context.Background(), mcp.CallToolRequest{})
 			require.NoError(t, err)
 			require.NotNil(t, result)
-			require.GreaterOrEqual(t, result.Content, 1)
-			require.IsType(t, &mcp.TextContent{}, result.Content[0])
-			assert.Equal(t, tt.expected, result.Content[0].(*mcp.TextContent).Text)
+			require.Len(t, result.Content, 1)
+			require.IsType(t, mcp.TextContent{}, result.Content[0])
+			assert.Equal(t, tt.expected, result.Content[0].(mcp.TextContent).Text)
 		})
 	}
 }

@@ -2,8 +2,12 @@ package tools
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 
 	"github.com/aquasecurity/trivy-mcp/pkg/flag"
+	"github.com/aquasecurity/trivy-mcp/pkg/tools/scan"
+	"github.com/aquasecurity/trivy-mcp/pkg/tools/version"
 	"github.com/aquasecurity/trivy/pkg/log"
 	"github.com/mark3labs/mcp-go/mcp"
 )
@@ -14,9 +18,9 @@ type TrivyTool struct {
 }
 
 type TrivyTools struct {
-	trivyBinary     string
-	debug           bool
-	useAquaPlatform bool
+	scanTools    *scan.ScanTools
+	versionTools *version.VersionTools
+	trivyTempDir string
 }
 
 func NewTrivyTools(opts flag.Options) *TrivyTools {
@@ -24,30 +28,44 @@ func NewTrivyTools(opts flag.Options) *TrivyTools {
 		log.Debug("Using Trivy binary", log.Any("trivyBinary", opts.TrivyBinary))
 	}
 
+	trivyTempDir := filepath.Join(os.TempDir(), "trivy-mcp-cache")
+	if err := os.MkdirAll(trivyTempDir, os.ModePerm); err != nil {
+		log.Error("Failed to create temp dir", log.Err(err))
+	}
+
 	return &TrivyTools{
-		trivyBinary:     opts.TrivyBinary,
-		debug:           opts.Debug,
-		useAquaPlatform: opts.UseAquaPlatform,
+		scanTools:    scan.NewScanTools(opts, trivyTempDir),
+		versionTools: version.NewVersionTools(opts, trivyTempDir),
+		trivyTempDir: filepath.Join(os.TempDir(), "trivy"),
 	}
 }
 
 func (t *TrivyTools) GetTools() []TrivyTool {
 	return []TrivyTool{
 		{
-			Tool:    scanFilesystemTool,
-			Handler: t.scanWithTrivyHandler,
+			Tool:    scan.ScanFilesystemTool,
+			Handler: t.scanTools.ScanWithTrivyHandler,
 		},
 		{
-			Tool:    scanImageTool,
-			Handler: t.scanWithTrivyHandler,
+			Tool:    scan.ScanImageTool,
+			Handler: t.scanTools.ScanWithTrivyHandler,
 		},
 		{
-			Tool:    scanRepositoryTool,
-			Handler: t.scanWithTrivyHandler,
+			Tool:    scan.ScanRepositoryTool,
+			Handler: t.scanTools.ScanWithTrivyHandler,
 		},
 		{
-			Tool:    trivyVersionTool,
-			Handler: t.trivyVersionHandler,
+			Tool:    version.TrivyVersionTool,
+			Handler: t.versionTools.TrivyVersionHandler,
 		},
+	}
+}
+
+func (t *TrivyTools) Cleanup() {
+	if t.trivyTempDir != "" {
+		log.Debug("Cleaning up temp dir", log.Any("tempDir", t.trivyTempDir))
+		if err := os.RemoveAll(t.trivyTempDir); err != nil {
+			log.Error("Failed to remove temp dir", log.Err(err))
+		}
 	}
 }

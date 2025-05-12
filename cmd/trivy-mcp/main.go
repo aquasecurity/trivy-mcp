@@ -12,6 +12,6 @@ func main() {
 }
 
 func run() error {
-	cmd := commands.NewCmd()
+	cmd := commands.NewRootCommand()
 	return cmd.Execute()
 }
