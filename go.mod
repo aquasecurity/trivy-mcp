@@ -3,6 +3,7 @@ module github.com/aquasecurity/trivy-mcp
 go 1.24.2
 
 require (
+	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/mark3labs/mcp-go v0.23.1
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
@@ -175,7 +176,6 @@ require (
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
-	github.com/golang-jwt/jwt/v5 v5.2.2 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/btree v1.1.3 // indirect
@@ -403,7 +403,6 @@ require (
 
 require (
 	github.com/aquasecurity/trivy v0.62.1
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/spf13/cast v1.8.0 // indirect
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
