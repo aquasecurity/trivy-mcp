@@ -29,7 +29,6 @@ type Response struct {
 
 type JwtClaims struct {
 	jwt.RegisteredClaims
-	Exp int64 `json:"exp"`
 }
 
 func (c *AquaCreds) Verify() error {
