@@ -17,7 +17,7 @@ import (
 	"time"
 
 	"github.com/aquasecurity/trivy/pkg/log"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type Response struct {
@@ -28,8 +28,7 @@ type Response struct {
 }
 
 type JwtClaims struct {
-	jwt.StandardClaims
-	Exp int64 `json:"exp"`
+	jwt.RegisteredClaims
 }
 
 func (c *AquaCreds) Verify() error {
