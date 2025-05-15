@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/aquasecurity/trivy-mcp/pkg/flag"
+	"github.com/aquasecurity/trivy-mcp/pkg/tools/auth"
 	"github.com/aquasecurity/trivy-mcp/pkg/tools/scan"
 	"github.com/aquasecurity/trivy-mcp/pkg/tools/version"
 	"github.com/aquasecurity/trivy/pkg/log"
@@ -18,6 +19,7 @@ type TrivyTool struct {
 }
 
 type TrivyTools struct {
+	authTools    *auth.AuthTools
 	scanTools    *scan.ScanTools
 	versionTools *version.VersionTools
 	trivyTempDir string
@@ -34,6 +36,7 @@ func NewTrivyTools(opts flag.Options) *TrivyTools {
 	}
 
 	return &TrivyTools{
+		authTools:    auth.NewAuthTools(opts),
 		scanTools:    scan.NewScanTools(opts, trivyTempDir),
 		versionTools: version.NewVersionTools(opts, trivyTempDir),
 		trivyTempDir: filepath.Join(os.TempDir(), "trivy"),
@@ -57,6 +60,14 @@ func (t *TrivyTools) GetTools() []TrivyTool {
 		{
 			Tool:    version.TrivyVersionTool,
 			Handler: t.versionTools.TrivyVersionHandler,
+		},
+		{
+			Tool:    auth.AuthLoginTool,
+			Handler: t.authTools.AuthLoginHandler,
+		},
+		{
+			Tool:    auth.AuthLogoutTool,
+			Handler: t.authTools.AuthLogoutHandler,
 		},
 	}
 }
