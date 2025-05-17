@@ -90,6 +90,7 @@ func (t *ScanTools) ScanWithTrivyHandler(ctx context.Context, request mcp.CallTo
 		fmt.Sprintf("--scanners=%s", strings.Join(scanArgs.scanType, ",")),
 		fmt.Sprintf("--severity=%s", strings.Join(scanArgs.severities, ",")),
 		fmt.Sprintf("--format=%s", scanArgs.outputFormat),
+		"--quiet",
 	}
 
 	if t.debug {
@@ -108,12 +109,12 @@ func (t *ScanTools) ScanWithTrivyHandler(ctx context.Context, request mcp.CallTo
 
 	// aquaPlatform only supports filesystem scans at the moment
 	if t.useAquaPlatform && scanArgs.targetType == "filesystem" {
-		aquaCreds, err := creds.Load()
+		aquaCreds, err := creds.LoadKeySecretCreds()
 		if err != nil {
 			return nil, fmt.Errorf("failed to load credentials which suggests the haven't been saved using `trivy mcp auth`: %v", err)
 		}
 		args = append(args, scanArgs.target)
-		return t.scanWithAquaPlatform(ctx, args, *aquaCreds)
+		return t.scanWithAquaPlatform(ctx, args, aquaCreds)
 	}
 
 	logger := log.WithPrefix(scanArgs.targetType)
@@ -128,6 +129,13 @@ func (t *ScanTools) ScanWithTrivyHandler(ctx context.Context, request mcp.CallTo
 
 	logger.Debug("Trivy scan arguments", log.Any("args", args))
 
+	devNull, err := os.OpenFile(os.DevNull, os.O_WRONLY, 0644)
+	if err != nil {
+		logger.Error("Failed to open os.DevNull", log.Err(err))
+		return nil, errors.New("failed to open os.DevNull")
+	}
+	defer func() { _ = devNull.Close() }()
+
 	if t.trivyBinary == "" {
 		logger.Info("Trivy binary not set, using default path")
 		app := commands.NewApp()
@@ -140,8 +148,9 @@ func (t *ScanTools) ScanWithTrivyHandler(ctx context.Context, request mcp.CallTo
 		logger.Debug("Using custom Trivy binary", log.String("binary", t.trivyBinary))
 		execCmd := exec.Command(t.trivyBinary, args...)
 		execCmd.Env = os.Environ()
-		execCmd.Stdout = os.Stdout
-		execCmd.Stderr = os.Stderr
+
+		execCmd.Stdout = devNull
+		execCmd.Stderr = devNull
 		if err := execCmd.Run(); err != nil {
 			logger.Error("Failed to scan project", log.Err(err))
 			return nil, errors.New("failed to scan project")
@@ -185,7 +194,9 @@ func (*ScanTools) processSBOMResult(resultsFilePath string, logger *log.Logger, 
 	}
 
 	return mcp.NewToolResultResource(
-		fmt.Sprintf("The embedded resource is a human readable SBOM format. \nThe filename is %s and the URI is file://%s. \n", filename, resultsFilePath),
+		fmt.Sprintf(`The embedded resource is a human readable SBOM format. 
+The filename is %s and the URI is file://%s.
+		// `, filename, resultsFilePath),
 		mcp.TextResourceContents{
 			URI:  resultsFilePath,
 			Text: string(content),

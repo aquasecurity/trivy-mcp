@@ -5,7 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/aquasecurity/trivy-mcp/internal/aqua"
 	"github.com/aquasecurity/trivy-mcp/pkg/flag"
+	"github.com/aquasecurity/trivy-mcp/pkg/tools/aquaplatform"
 	"github.com/aquasecurity/trivy-mcp/pkg/tools/scan"
 	"github.com/aquasecurity/trivy-mcp/pkg/tools/version"
 	"github.com/aquasecurity/trivy/pkg/log"
@@ -20,10 +22,11 @@ type TrivyTool struct {
 type TrivyTools struct {
 	scanTools    *scan.ScanTools
 	versionTools *version.VersionTools
+	aquaTools    *aquaplatform.AquaPlatformTools
 	trivyTempDir string
 }
 
-func NewTrivyTools(opts flag.Options) *TrivyTools {
+func NewTrivyTools(opts flag.Options, aquaClient *aqua.Client) *TrivyTools {
 	if opts.TrivyBinary != "" {
 		log.Debug("Using Trivy binary", log.Any("trivyBinary", opts.TrivyBinary))
 	}
@@ -36,8 +39,13 @@ func NewTrivyTools(opts flag.Options) *TrivyTools {
 	return &TrivyTools{
 		scanTools:    scan.NewScanTools(opts, trivyTempDir),
 		versionTools: version.NewVersionTools(opts, trivyTempDir),
+		aquaTools:    aquaplatform.NewAquaPlatformTools(opts, trivyTempDir, aquaClient),
 		trivyTempDir: filepath.Join(os.TempDir(), "trivy"),
 	}
+}
+
+func (t *TrivyTools) Count() int {
+	return len(t.GetTools())
 }
 
 func (t *TrivyTools) GetTools() []TrivyTool {
@@ -57,6 +65,10 @@ func (t *TrivyTools) GetTools() []TrivyTool {
 		{
 			Tool:    version.TrivyVersionTool,
 			Handler: t.versionTools.TrivyVersionHandler,
+		},
+		{
+			Tool:    aquaplatform.GetAquaSuppressionsTool,
+			Handler: t.aquaTools.GetSuppressionsHandler,
 		},
 	}
 }
