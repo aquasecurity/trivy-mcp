@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"syscall"
 
+	"github.com/aquasecurity/trivy-mcp/internal/aqua"
 	"github.com/aquasecurity/trivy-mcp/internal/creds"
 	"github.com/aquasecurity/trivy-mcp/pkg/flag"
 	"github.com/aquasecurity/trivy/pkg/log"
@@ -32,17 +33,24 @@ func NewAuthCommand() *cobra.Command {
 	return cmd
 }
 
-func getSecretValue(value, title string) (string, error) {
+func getInputValue(value, title string, secret bool) (string, error) {
 	if value != "" {
 		return value, nil
 	}
 	fmt.Print(title)
-	secret, err := term.ReadPassword(int(syscall.Stdin))
-	if err != nil {
-		return "", err
+	var input []byte
+	var err error
+	if secret {
+		input, err = term.ReadPassword(int(syscall.Stdin))
+		if err != nil {
+			return "", err
+		}
+	} else {
+		if _, err = fmt.Scanln(&input); err != nil {
+			return "", err
+		}
 	}
-	fmt.Println()
-	return string(secret), nil
+	return string(input), nil
 }
 
 func getRegionFromList(region string) (string, error) {
@@ -83,20 +91,36 @@ func runAuth(cmd *cobra.Command, args []string) error {
 	logger := log.WithPrefix("auth")
 	opts := flag.ToLoginOptions()
 
-	if opts.Clear {
-		if err := creds.Clear(); err != nil {
-			return fmt.Errorf("failed to clear credentials: %v", err)
-		}
-		logger.Info("Credentials cleared successfully")
-		return nil
+	existing, err := creds.LoadKeySecretCreds()
+	if err != nil {
+		return fmt.Errorf("failed to load existing credentials: %v", err)
 	}
+	if existing != nil {
+		fmt.Println("Existing credentials found, are you sure you want to login again? (y/n): ")
+		var response string
+		_, err := fmt.Scanln(&response)
+		if err != nil {
+			return err
+		}
+		if response != "y" && response != "Y" {
+			return nil
+		}
+		fmt.Println("Clearing existing credentials, make sure you clear up the API Key in Aqua Platform...")
+		if opts.Clear {
+			if err := creds.Clear(); err != nil {
+				return fmt.Errorf("failed to clear credentials: %v", err)
+			}
+			logger.Info("Credentials cleared successfully")
+			return nil
+		}
 
-	var err error
-	opts.AquaKey, err = getSecretValue(opts.AquaKey, "Enter Aqua Key: ")
+	}
+	fmt.Println()
+	opts.AquaUsername, err = getInputValue(opts.AquaUsername, "Enter Aqua Username: ", false)
 	if err != nil {
 		return err
 	}
-	opts.AquaSecret, err = getSecretValue(opts.AquaSecret, "Enter Aqua Secret: ")
+	opts.AquaPassword, err = getInputValue(opts.AquaPassword, "Enter Aqua Password: ", true)
 	if err != nil {
 		return err
 	}
@@ -105,13 +129,12 @@ func runAuth(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	creds := opts.ToAquaCreds()
-	if err := creds.Verify(); err != nil {
-		return fmt.Errorf("failed to verify credentials: %v", err)
+	aquaClient := aqua.NewClient()
+	if err := aquaClient.Login(opts.AquaUsername, opts.AquaPassword, opts.AquaRegion); err != nil {
+		return fmt.Errorf("failed to login: %v", err)
 	}
-
-	if err := creds.Save(); err != nil {
-		return fmt.Errorf("failed to save credentials: %v", err)
+	if err := aquaClient.CreateKeySecretCreds(); err != nil {
+		return fmt.Errorf("failed to create key and secret credentials: %v", err)
 	}
 
 	logger.Info("Credentials saved successfully")
