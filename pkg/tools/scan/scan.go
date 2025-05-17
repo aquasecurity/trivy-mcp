@@ -160,23 +160,14 @@ func (t *ScanTools) ScanWithTrivyHandler(ctx context.Context, request mcp.CallTo
 		return result, nil
 	}
 
-	defer func() {
-		if err := os.Remove(resultsFilePath); err != nil {
-			logger.Error("Failed to remove results file", log.Err(err))
-		}
-	}()
-
-	content, err := os.ReadFile(resultsFilePath)
-	if err != nil {
-		logger.Error("Failed to read scan results file", log.Err(err))
-		return nil, errors.New("failed to read scan results file")
-	}
-
 	return mcp.NewToolResultResource(
-		"The embedded resource is a human readable JSON format and found at the filepath that can be further processed.",
+		fmt.Sprintf(`The results can be found in the file "%s", which is found at "%s" \n
+		 Summarise the contents of the file and report it back to the user in a nicely formatted way.\n
+	It is important that the output MUST include the ID and the severity of the issues to inform the user of the issues.
+	`, filename, resultsFilePath),
 		mcp.TextResourceContents{
-			URI:  resultsFilePath,
-			Text: string(content),
+			URI:      resultsFilePath,
+			MIMEType: "application/json",
 		},
 	), nil
 }
