@@ -3,8 +3,8 @@ package scan
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
-	"strings"
 
 	"path/filepath"
 
@@ -15,6 +15,9 @@ import (
 )
 
 func (t *ScanTools) scanWithAquaPlatform(ctx context.Context, args []string, creds creds.AquaCreds) (*mcp.CallToolResult, error) {
+
+	// add quiet to reduce the noise
+	args = append(args, "--quiet")
 
 	logger := log.WithPrefix("aqua")
 	logger.Debug("Scanning with args", log.Any("args", args))
@@ -66,14 +69,15 @@ func (t *ScanTools) scanWithAquaPlatform(ctx context.Context, args []string, cre
 
 	logger.Debug("Environment", log.Any("ENV", os.Environ()))
 
-	tempFile := filepath.Join(os.TempDir(), "trivy-mcp-scan.results.json")
+	filename := "trivy-mcp-scan.results.json"
+	resultsFilePath := filepath.Join(os.TempDir(), filename)
 	defer func() {
-		if err := os.Remove(tempFile); err != nil {
+		if err := os.Remove(resultsFilePath); err != nil {
 			logger.Error("Failed to remove temp file", log.Err(err))
 		}
 	}()
 
-	if err := os.Setenv("AQUA_ASSURANCE_EXPORT", tempFile); err != nil {
+	if err := os.Setenv("AQUA_ASSURANCE_EXPORT", resultsFilePath); err != nil {
 		logger.Error("Failed to set Aqua assurance export in environment variables", log.Err(err))
 		return nil, err
 	}
@@ -83,11 +87,15 @@ func (t *ScanTools) scanWithAquaPlatform(ctx context.Context, args []string, cre
 		return nil, err
 	}
 
-	sb := strings.Builder{}
-	sb.WriteString("Aqua scan results:\n")
-	sb.WriteString("====================================\n")
-	sb.WriteString("Scan completed successfully\n")
-
-	return mcp.NewToolResultText(sb.String()), nil
+	return mcp.NewToolResultResource(
+		fmt.Sprintf(`The results can be found in the file "%s", which is found at "%s" \n
+		 Summarise the contents of the file and report it back to the user in a nicely formatted way.\n
+	It is important that the output MUST include the ID and the severity of the issues to inform the user of the issues.
+	`, filename, resultsFilePath),
+		mcp.TextResourceContents{
+			URI:      resultsFilePath,
+			MIMEType: "application/json",
+		},
+	), nil
 
 }
