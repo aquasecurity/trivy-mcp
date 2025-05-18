@@ -194,9 +194,8 @@ func (*ScanTools) processSBOMResult(resultsFilePath string, logger *log.Logger, 
 	}
 
 	return mcp.NewToolResultResource(
-		fmt.Sprintf(`The embedded resource is a human readable SBOM format. 
-The filename is %s and the URI is file://%s.
-		// `, filename, resultsFilePath),
+		fmt.Sprintf("The embedded resource is a human readable SBOM format. "+
+"The filename is %s and the URI is file://%s.", filename, resultsFilePath),
 		mcp.TextResourceContents{
 			URI:  resultsFilePath,
 			Text: string(content),
