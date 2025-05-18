@@ -57,7 +57,7 @@ func (a *AquaPlatformTools) GetSuppressionsHandler(ctx context.Context, request 
 
 	return mcp.NewToolResultResource(
 		fmt.Sprintf(`The results of the call to get suppressions are in a file called "%s" found at "file://%s" \n
-		You must READ the contenst of the file and parse thme to return a formated list of the suppressions. \n
+		You must READ the contents of the file and parse them to return a formatted list of the suppressions. \n
 		The file is accessible to you as it is on the local filesystem with correct permissions`, "suppressions.json", suppressionsFile),
 		mcp.TextResourceContents{
 			URI:      suppressionsFile,
