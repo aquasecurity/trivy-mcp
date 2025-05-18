@@ -12,10 +12,10 @@ var (
 	useAquaPlatform bool
 
 	// login flags
-	aquaKey    string
-	aquaSecret string
-	aquaRegion string
-	clear      bool
+	aquaUsername string
+	aquaPassword string
+	aquaRegion   string
+	clear        bool
 )
 
 func AddBaseFlags(cmd *cobra.Command) {
@@ -24,9 +24,6 @@ func AddBaseFlags(cmd *cobra.Command) {
 }
 
 func AddLoginFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&aquaKey, "aqua-key", "", "Aqua key")
-	cmd.Flags().StringVar(&aquaSecret, "aqua-secret", "", "Aqua secret")
-	cmd.Flags().StringVar(&aquaRegion, "aqua-region", "", "Aqua region (US, EU, Singapore, Sydney, Dev)")
 	cmd.Flags().BoolVar(&clear, "clear", false, "Clear the saved credentials")
 }
 
@@ -45,9 +42,9 @@ func ToOptions() Options {
 
 func ToLoginOptions() LoginOptions {
 	return LoginOptions{
-		AquaKey:    aquaKey,
-		AquaSecret: aquaSecret,
-		AquaRegion: aquaRegion,
-		Clear:      clear,
+		AquaRegion:   aquaRegion,
+		AquaUsername: aquaUsername,
+		AquaPassword: aquaPassword,
+		Clear:        clear,
 	}
 }

@@ -14,16 +14,16 @@ type Options struct {
 }
 
 type LoginOptions struct {
-	AquaKey    string
-	AquaSecret string
-	AquaRegion string
-	Clear      bool
+	AquaRegion   string
+	AquaUsername string
+	AquaPassword string
+	Clear        bool
 }
 
-func (o *LoginOptions) ToAquaCreds() creds.AquaCreds {
-	return creds.AquaCreds{
-		AquaKey:    o.AquaKey,
-		AquaSecret: o.AquaSecret,
-		Region:     o.AquaRegion,
+func (o *LoginOptions) ToAquaCreds() creds.AquaPlatformCreds {
+	return creds.AquaPlatformCreds{
+		AquaUsername: o.AquaUsername,
+		AquaPassword: o.AquaPassword,
+		Region:       o.AquaRegion,
 	}
 }
