@@ -10,7 +10,6 @@ import (
 	"github.com/aquasecurity/trivy-mcp/pkg/tools/version"
 	"github.com/aquasecurity/trivy/pkg/log"
 	"github.com/mark3labs/mcp-go/mcp"
-	"github.com/mark3labs/mcp-go/server"
 )
 
 type TrivyTool struct {
@@ -41,34 +40,30 @@ func NewTrivyTools(opts flag.Options) *TrivyTools {
 	}
 }
 
-func (t *TrivyTools) AddTools(s *server.MCPServer) {
-	s.AddTools(
-		server.ServerTool{
+func (t *TrivyTools) GetTools() []TrivyTool {
+	return []TrivyTool{
+		{
 			Tool:    scan.ScanFilesystemTool,
 			Handler: t.scanTools.ScanWithTrivyHandler,
 		},
-		server.ServerTool{
-			Tool:    scan.ScanFilesystemTool,
-			Handler: t.scanTools.ScanWithTrivyHandler,
-		},
-		server.ServerTool{
+		{
 			Tool:    scan.ScanImageTool,
 			Handler: t.scanTools.ScanWithTrivyHandler,
 		},
-		server.ServerTool{
+		{
 			Tool:    scan.ScanRepositoryTool,
 			Handler: t.scanTools.ScanWithTrivyHandler,
 		},
-		server.ServerTool{
+		{
 			Tool:    version.TrivyVersionTool,
 			Handler: t.versionTools.TrivyVersionHandler,
 		},
-	)
+	}
 }
 
 func (t *TrivyTools) Cleanup() {
 	if t.trivyTempDir != "" {
-		log.Info("Cleaning up mcp cache dir", log.Any("tempDir", t.trivyTempDir))
+		log.Debug("Cleaning up temp dir", log.Any("tempDir", t.trivyTempDir))
 		if err := os.RemoveAll(t.trivyTempDir); err != nil {
 			log.Error("Failed to remove temp dir", log.Err(err))
 		}
