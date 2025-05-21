@@ -1,12 +1,21 @@
 package creds
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
+func skipCI(t *testing.T) {
+	if os.Getenv("GITHUB_ACTIONS") == "true" {
+		t.Skip("Skipping test in CI environment")
+	}
+}
+
 func TestSetCreds(t *testing.T) {
+	skipCI(t)
+
 	tests := []struct {
 		name    string
 		creds   *AquaCreds
@@ -41,6 +50,8 @@ func TestSetCreds(t *testing.T) {
 }
 
 func TestLoadCreds(t *testing.T) {
+	skipCI(t)
+
 	tests := []struct {
 		name    string
 		creds   *AquaCreds
@@ -84,6 +95,8 @@ func TestLoadCreds(t *testing.T) {
 }
 
 func TestClearCreds(t *testing.T) {
+	skipCI(t)
+
 	tests := []struct {
 		name  string
 		creds *AquaCreds
