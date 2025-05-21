@@ -20,8 +20,8 @@ type McpServer struct {
 	Transport string
 	// Port is the port to listen on
 	Port int
-	// Tools is the list of tools to register with the server
-	Tools *tools.TrivyTools
+
+	Opts flag.Options
 }
 
 func NewMcpServer(opts flag.Options) *McpServer {
@@ -47,42 +47,47 @@ func NewMcpServer(opts flag.Options) *McpServer {
 		version.Version,
 	)
 
-	th := tools.NewTrivyTools(opts)
-
 	return &McpServer{
 		Server:    s,
 		Transport: opts.Transport,
 		Port:      opts.SSEPort,
-		Tools:     th,
+		Opts:      opts,
 	}
 
 }
 
-func (m *McpServer) Start() error {
+func (m *McpServer) Start(ctx context.Context) error {
+	th := tools.NewTrivyTools(m.Opts)
+	th.AddTools(m.Server)
 
-	// Register the tools with the server
-	for _, tool := range m.Tools.GetTools() {
-		log.Info("Registering tool", log.String("tool", tool.Tool.Name))
-		m.Server.AddTool(tool.Tool, tool.Handler)
-	}
+	var sse *server.SSEServer
+	var stdio *server.StdioServer
+
+	go func() {
+		<-ctx.Done()
+		log.Info("Received shutdown signal, cleaning up the mcp server...")
+		if sse != nil {
+			if err := sse.Shutdown(ctx); err != nil {
+				log.Error("Failed to shutdown SSE server", log.Err(err))
+			}
+		}
+		if th != nil {
+			th.Cleanup()
+		}
+		os.Exit(0)
+	}()
 
 	// Start the server
 	switch m.Transport {
 	case "sse":
 		log.Info("Starting Trivy MCP server on port", log.Int("port", m.Port))
-		s := server.NewSSEServer(m.Server, server.WithBaseURL(fmt.Sprintf("http://localhost:%d", m.Port)), server.WithKeepAlive(true))
-		return s.Start(fmt.Sprintf(":%d", m.Port))
+		sse = server.NewSSEServer(m.Server, server.WithBaseURL(fmt.Sprintf("http://localhost:%d", m.Port)), server.WithKeepAlive(true))
+		return sse.Start(fmt.Sprintf(":%d", m.Port))
 	case "stdio":
 		log.Info("Starting Trivy MCP server as stdio")
-		s := server.NewStdioServer(m.Server)
-		return s.Listen(context.Background(), os.Stdin, os.Stdout)
+		stdio = server.NewStdioServer(m.Server)
+		return stdio.Listen(context.Background(), os.Stdin, os.Stdout)
 	default:
 		return nil
-	}
-}
-
-func (m *McpServer) Cleanup() {
-	if m.Tools != nil {
-		m.Tools.Cleanup()
 	}
 }
