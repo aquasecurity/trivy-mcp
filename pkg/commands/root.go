@@ -1,6 +1,11 @@
 package commands
 
 import (
+	"context"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/aquasecurity/trivy-mcp/pkg/flag"
 	"github.com/aquasecurity/trivy-mcp/pkg/mcpserver"
 	"github.com/aquasecurity/trivy-mcp/pkg/version"
@@ -36,10 +41,14 @@ The server can be configured to use different transports, such as SSE (Server-Se
 				return nil
 			}
 
-			server := mcpserver.NewMcpServer(opts)
-			defer func() { server.Cleanup() }()
+			// allow us to gracefully shutdown the server
+			// when we receive a SIGINT or SIGTERM signal
+			// Suspend signal isn't handled for now
+			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+			defer cancel()
 
-			return server.Start()
+			server := mcpserver.NewMcpServer(opts)
+			return server.Start(ctx)
 		},
 		SilenceErrors: true,
 		SilenceUsage:  true,
