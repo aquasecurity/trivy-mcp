@@ -1,9 +1,20 @@
-# Trivy MCP Server Plugin - _EXPERIMENTAL WIP_
+# Trivy MCP Server Plugin
 
-This plugin starts an MCP Server that can be used as a gateway to Trivy
+This plugin starts a Model Context Protocol (MCP) server that integrates Trivy's security scanning capabilities with VS Code and other MCP-enabled tools.
 
 > [!IMPORTANT]
 > This is early stage development of the MCP Server, so you should assume things won't work great for now
+
+## Features
+
+- **Natural Language Scanning**: Ask questions about security issues in natural language
+- **Multiple Scan Types**:
+  - Filesystem scanning for local projects
+  - Container image vulnerability scanning
+  - Remote repository security analysis
+- **Integration with Aqua Platform**: Optional integration with Aqua Security's platform for enhanced scanning capabilities
+- **Flexible Transport**: Support for both stdio and SSE (Server-Sent Events) transport protocols
+- **VS Code Integration**: Seamless integration with VS Code's chat interface
 
 ## Installing the plugin
 
@@ -23,15 +34,47 @@ You're now ready to start the plugin, this will launch an MCP server that Cursor
 trivy mcp
 ```
 
-### Options
+### Available Options
 
-Along with the usual global flags supported by Trivy, the following flags are available for the MCP server. For now, you don't need to specify any of them
+| Option              | Values         | Default | Description                                             |
+| ------------------- | -------------- | ------- | ------------------------------------------------------- |
+| `--transport` / `-t`| `sse`, `stdio` | `stdio` | Transport protocol for the MCP Server                   |
+| `--port` / `-p`     |                | 23456   | Port for SSE transport mode                             |
+| `--trivy-binary`    |                |         | Custom Trivy binary path (optional)                     |
+| `--use-aqua-platform`  / `a`      | `true/false`   | `false` | Enable Aqua Platform integration                        |
+| `--debug`           | `true/false`   | `false` | Enable debug logging                                    |
 
-| Argument             | Options        | Default | Description                                             |
-| -------------------- | -------------- | ------- | ------------------------------------------------------- |
-| `--transport` / `-t` | `sse`, `stdio` | `stdio` | The transport of MCP Server to run                      |
-| `--port` / `-p`      |                | 23456   | The port to launch the MCP server on                    |
-| `--trivy-binary`     |                |         | Optionally provide a binary to use instead of core code |
+
+
+## Authentication
+
+The MCP Server supports integration with Aqua Platform through the `auth` subcommand:
+
+```sh
+# Save Aqua Platform credentials
+trivy mcp auth login --key "YOUR_AQUA_KEY" --secret "YOUR_AQUA_SECRET" --region "YOUR_REGION"
+
+# Clear saved credentials
+trivy mcp auth logout
+
+# Verify saved credentials
+trivy mcp auth status
+```
+
+### Available Auth Options
+| Option            | Description                                    |
+| ---------------- | ---------------------------------------------- |
+| `--key`          | Aqua Platform API key                          |
+| `--secret`       | Aqua Platform API secret                       |
+| `--region`       | Aqua Platform region (e.g., 'us-east-1')      |
+
+After configuring credentials, you can use Aqua Platform features by starting the server with the `--use-aqua-platform` flag:
+
+```sh
+trivy mcp --use-aqua-platform
+```
+
+Credentials are securely stored in the platform specific key chain.
 
 ## Configuring the MCP Server in VSCode
 
@@ -88,31 +131,48 @@ You can configure the Trivy mcp to start itself or use the sse http endpoint
 
 
 
-## Some sample prompts
+## Example Queries
 
 > [!IMPORTANT]
-> Ensure that the chat window is in `Agent` mode not `Ask`
+> Make sure to use the chat window in `Agent` mode, not `Ask` mode
 
-### Filesystem scanning
-
-With an open project, why not try;
-
+### Local Project Analysis
 ```text
 Are there any vulnerabilities or misconfigurations in this project?
 ```
+```text
+Find all HIGH severity vulnerabilities in this codebase
+```
+```text
+Generate a CycloneDX SBOM for this project
+```
 
-### Image scanning
-
-You can ask about images to get information
-
+### Container Image Scanning
 ```text
 Does the python:3.12 image have any vulnerabilities?
 ```
-
-### Repository scanning
-
-Find out about a remote repository
-
 ```text
-What are the vulnerabilities in github.com/aquasecurity/trivy-ci-test
+Show me all critical security issues in the nginx:latest image
+```
+```text
+What are the licenses used by dependencies in the node:18 image?
+```
+
+### Repository Analysis
+```text
+What are the vulnerabilities in github.com/aquasecurity/trivy-ci-test?
+```
+```text
+Check for misconfigurations in kubernetes/kubernetes repository
+```
+
+### Advanced Usage
+```text
+Scan this project for secrets and license issues only
+```
+```text
+Generate an SPDX SBOM and show me any dependency vulnerabilities
+```
+```text
+What security issues were fixed in the latest version of this image?
 ```

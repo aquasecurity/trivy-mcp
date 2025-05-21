@@ -17,7 +17,6 @@ type LoginOptions struct {
 	AquaKey    string
 	AquaSecret string
 	AquaRegion string
-	Clear      bool
 }
 
 func (o *LoginOptions) ToAquaCreds() *creds.AquaCreds {
