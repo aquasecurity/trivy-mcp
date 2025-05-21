@@ -2,6 +2,8 @@ package creds
 
 import (
 	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/zalando/go-keyring"
@@ -11,6 +13,8 @@ type AquaCreds struct {
 	AquaKey    string `json:"aqua_key"`
 	AquaSecret string `json:"aqua_secret"`
 	Region     string `json:"region"`
+	Token      string `json:"token"`
+	ExpiresAt  int64  `json:"expires_at"`
 }
 
 func (c *AquaCreds) GetUrls() (string, string) {
@@ -30,13 +34,7 @@ func (c *AquaCreds) GetUrls() (string, string) {
 
 func Clear() error {
 	// Clear the credentials from the keyring
-	if err := keyring.Delete("trivy-mcp-aqua", "aqua_key"); err != nil {
-		return err
-	}
-	if err := keyring.Delete("trivy-mcp-aqua", "aqua_secret"); err != nil {
-		return err
-	}
-	if err := keyring.Delete("trivy-mcp-aqua", "region"); err != nil {
+	if err := keyring.Delete("trivy-mcp-aqua", "aqua-creds"); err != nil && err != keyring.ErrNotFound {
 		return err
 	}
 	return nil
@@ -44,54 +42,33 @@ func Clear() error {
 
 // Save stores the credentials to disk with machine-specific encoding
 func (c *AquaCreds) Save() error {
-	encodedKey := base64.StdEncoding.EncodeToString([]byte(c.AquaKey))
-	encodedSecret := base64.StdEncoding.EncodeToString([]byte(c.AquaSecret))
-	region := base64.StdEncoding.EncodeToString([]byte(c.Region))
+	credJson, err := json.Marshal(c)
+	if err != nil {
+		return fmt.Errorf("failed to marshal credentials: %w", err)
+	}
+	encoded := base64.StdEncoding.EncodeToString(credJson)
 
-	if err := keyring.Set("trivy-mcp-aqua", "aqua_key", encodedKey); err != nil {
+	if err := keyring.Set("trivy-mcp-aqua", "aqua-creds", encoded); err != nil {
 		return err
 	}
 
-	if err := keyring.Set("trivy-mcp-aqua", "aqua_secret", encodedSecret); err != nil {
-		return err
-	}
-
-	if err := keyring.Set("trivy-mcp-aqua", "region", region); err != nil {
-		return err
-	}
 	return nil
 }
 
 // Load retrieves the credentials from disk
 func Load() (*AquaCreds, error) {
-	encodedKey, err := keyring.Get("trivy-mcp-aqua", "aqua_key")
-	if err != nil {
-		return nil, err
-	}
-	encodedSecret, err := keyring.Get("trivy-mcp-aqua", "aqua_secret")
-	if err != nil {
-		return nil, err
-	}
-	region, err := keyring.Get("trivy-mcp-aqua", "region")
+	encoded, err := keyring.Get("trivy-mcp-aqua", "aqua-creds")
 	if err != nil {
 		return nil, err
 	}
 
-	decodedKey, err := base64.StdEncoding.DecodeString(encodedKey)
+	decoded, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
 		return nil, err
 	}
-	decodedSecret, err := base64.StdEncoding.DecodeString(encodedSecret)
-	if err != nil {
-		return nil, err
+	var creds AquaCreds
+	if err := json.Unmarshal(decoded, &creds); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal credentials: %w", err)
 	}
-	decodedRegion, err := base64.StdEncoding.DecodeString(region)
-	if err != nil {
-		return nil, err
-	}
-	return &AquaCreds{
-		AquaKey:    string(decodedKey),
-		AquaSecret: string(decodedSecret),
-		Region:     string(decodedRegion),
-	}, nil
+	return &creds, nil
 }

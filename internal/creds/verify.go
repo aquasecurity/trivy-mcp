@@ -31,6 +31,31 @@ type JwtClaims struct {
 	jwt.RegisteredClaims
 }
 
+func (c *AquaCreds) GenerateToken() (string, error) {
+	logger := log.WithPrefix("aqua")
+	logger.Debug("Verifying Aqua credentials")
+
+	if c.AquaKey == "" || c.AquaSecret == "" || c.Region == "" {
+		return "", fmt.Errorf("aqua credentials are not set")
+	}
+
+	// Check if the token is still valid
+	if c.Token != "" && c.ExpiresAt > time.Now().Unix() {
+		logger.Debug("Token is still valid")
+		return c.Token, nil
+	}
+
+	if err := c.Verify(); err != nil {
+		return "", fmt.Errorf("failed to obtain JWT: %w", err)
+	}
+
+	if err := c.Save(); err != nil {
+		return "", fmt.Errorf("failed to save credentials: %w", err)
+	}
+
+	return c.Token, nil
+}
+
 func (c *AquaCreds) Verify() error {
 
 	logger := log.WithPrefix("aqua")
@@ -45,27 +70,38 @@ func (c *AquaCreds) Verify() error {
 		return err
 	}
 
+	claims, err := decodeJWT(response)
+	if err != nil {
+		return fmt.Errorf("failed to decode JWT: %w", err)
+	}
+
+	c.Token = response
+	c.ExpiresAt = claims.ExpiresAt.Unix()
+
+	logger.Debug("Login credentials verified successfully")
+	return nil
+}
+
+func decodeJWT(response string) (*JwtClaims, error) {
 	parts := strings.Split(response, ".")
 	if len(parts) != 3 {
-		return errors.New("invalid JWT token format")
+		return nil, errors.New("invalid JWT token format")
 	}
 	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
 	if err != nil {
-		return errors.New("failed to decode JWT payload")
+		return nil, errors.New("failed to decode JWT payload")
 	}
 	var claims JwtClaims
 	err = json.Unmarshal(payload, &claims)
 	if err != nil {
-		return errors.New("failed to unmarshal JWT claims")
+		return nil, errors.New("failed to unmarshal JWT claims")
 	}
 
-	logger.Debug("Login credentials verified successfully")
-
-	return nil
+	return &claims, nil
 }
 
 func (c *AquaCreds) obtainJWT() (string, error) {
-	body := `{"validity":30,"allowed_endpoints":["ANY:v2/build/twirp/buildsecurity.BuildSecurity/*","ANY:v2/log*","ANY:api/*"]}`
+	body := `{"validity":30,"allowed_endpoints":["ANY:v2/build/twirp/buildsecurity.BuildSecurity/*","ANY:v2/log*","ANY:api/*","ANY:v2/build/*"]}`
 
 	_, cspmUrl := c.GetUrls()
 
@@ -101,8 +137,8 @@ func (c *AquaCreds) obtainJWT() (string, error) {
 	defer func() { _ = resp.Body.Close() }()
 
 	var response Response
-	debugRawBody := getRawMessageData(resp.Body)              // read the body before decoding it
-	resp.Body = io.NopCloser(strings.NewReader(debugRawBody)) // restore the body to be read again
+	debugRawBody := getRawMessageData(resp.Body)
+	resp.Body = io.NopCloser(strings.NewReader(debugRawBody))
 	err = json.NewDecoder(resp.Body).Decode(&response)
 	if err != nil {
 		return "", fmt.Errorf("failed decoding response with error: %w, raw response body: %s", err, debugRawBody)

@@ -20,8 +20,8 @@ type LoginOptions struct {
 	Clear      bool
 }
 
-func (o *LoginOptions) ToAquaCreds() creds.AquaCreds {
-	return creds.AquaCreds{
+func (o *LoginOptions) ToAquaCreds() *creds.AquaCreds {
+	return &creds.AquaCreds{
 		AquaKey:    o.AquaKey,
 		AquaSecret: o.AquaSecret,
 		Region:     o.AquaRegion,
