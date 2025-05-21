@@ -68,15 +68,7 @@ func login(cmd *cobra.Command, args []string) error {
 	logger := log.WithPrefix("auth")
 	opts := flag.ToLoginOptions()
 
-	if opts.Clear {
-		if err := creds.Clear(); err != nil {
-			return fmt.Errorf("failed to clear credentials: %v", err)
-		}
-		logger.Info("Credentials cleared successfully")
-		return nil
-	}
-
-	creds, err := getCreds(opts)
+	creds, err := getInputDetailsForCredentials(opts)
 	if err != nil {
 		return fmt.Errorf("failed to get credentials: %v", err)
 	}
@@ -105,7 +97,7 @@ func logout(cmd *cobra.Command, args []string) error {
 func printToken(cmd *cobra.Command, args []string) error {
 	logger := log.WithPrefix("auth")
 	opts := flag.ToLoginOptions()
-	creds, err := getCreds(opts)
+	creds, err := getInputDetailsForCredentials(opts)
 	if err != nil {
 		return fmt.Errorf("failed to get credentials: %v", err)
 	}
@@ -136,7 +128,7 @@ func checkStatus(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func getCreds(opts flag.LoginOptions) (*creds.AquaCreds, error) {
+func getInputDetailsForCredentials(opts flag.LoginOptions) (*creds.AquaCreds, error) {
 	var err error
 	opts.AquaKey, err = getInput(opts.AquaKey, "Enter Aqua Key: ", true)
 	if err != nil {
