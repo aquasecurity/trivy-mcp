@@ -28,7 +28,7 @@ func NewVersionTools(opts flag.Options, trivyTempDir string) *VersionTools {
 }
 
 var TrivyVersionTool = mcp.NewTool("trivy_version",
-	mcp.WithDescription("Get the version of Trivy"),
+	mcp.WithDescription("Returns the version of the embedded Trivy, or the version of the Trivy binary if specified if explicitly specified"),
 )
 
 // If the trivy binary is not specified, it will be use the version fo trivy that is baked into the binary

@@ -3,7 +3,6 @@ package scan
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 
 	"path/filepath"
@@ -14,7 +13,7 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
-func (t *ScanTools) scanWithAquaPlatform(ctx context.Context, args []string, creds creds.AquaCreds) (*mcp.CallToolResult, error) {
+func (t *ScanTools) scanWithAquaPlatform(ctx context.Context, args []string, creds creds.AquaCreds, scanArgs *scanArgs) (*mcp.CallToolResult, error) {
 
 	// add quiet to reduce the noise
 	args = append(args, "--quiet")
@@ -87,15 +86,5 @@ func (t *ScanTools) scanWithAquaPlatform(ctx context.Context, args []string, cre
 		return nil, err
 	}
 
-	return mcp.NewToolResultResource(
-		fmt.Sprintf(`The results can be found in the file "%s", which is found at "%s" \n
-		 Summarise the contents of the file and report it back to the user in a nicely formatted way.\n
-	It is important that the output MUST include the ID and the severity of the issues to inform the user of the issues.
-	`, filename, resultsFilePath),
-		mcp.TextResourceContents{
-			URI:      resultsFilePath,
-			MIMEType: "application/json",
-		},
-	), nil
-
+	return t.processResultsFile(resultsFilePath, scanArgs, filename)
 }

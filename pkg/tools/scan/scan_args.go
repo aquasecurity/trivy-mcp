@@ -29,12 +29,13 @@ var (
 
 var targetString = mcp.WithString("target",
 	mcp.Required(),
-	mcp.Description("The path to the project to scan"),
+	mcp.Description(`This is the target of the scan, it can be a directory, a file, container image or a repository \n
+	When the target is the current working directory, use the absolute path rather than "."`),
 )
 
 var scanTypeArray = mcp.WithArray("scanType",
 	mcp.Required(),
-	mcp.Description("The type of scan to perform"),
+	mcp.Description("Which scanners you want to run, use as many as you want to limit the number of scans that need to be permformed"),
 	mcp.Items(
 		map[string]any{
 			"type":        "string",
@@ -46,7 +47,7 @@ var scanTypeArray = mcp.WithArray("scanType",
 )
 
 var severityArray = mcp.WithArray("severities",
-	mcp.Description("The severity levels to include in the scan"),
+	mcp.Description("The minimum severity levels to include in the scan, if you chose HIGH for example, only HIGH and CRITICAL will be included"),
 	mcp.Items(
 		map[string]any{
 			"type":        "string",
@@ -67,33 +68,34 @@ var outputFormatString = mcp.WithString("outputFormat",
 )
 
 var fixedOnlyBool = mcp.WithBoolean("fixedOnly",
-	mcp.Description("If true, only show fixed vulnerabilities"),
+	mcp.Description("Vulnerabilities that have no fixes will be exluded from the report if this is set to true"),
 	mcp.DefaultBool(false),
 )
 
 func targetTypeString(expectedValue string) mcp.ToolOption {
 	return mcp.WithString("targetType",
 		mcp.Required(),
-		mcp.Description("The type of target to scan"),
+		mcp.Description("The type of target, it can be a directory, a file, container image or a repository"),
 		mcp.Enum(expectedValue),
 		mcp.DefaultString(expectedValue),
 	)
 }
 
 func parseScanArgs(request mcp.CallToolRequest) (*scanArgs, error) {
-	target, ok := request.Params.Arguments["target"].(string)
+	args := request.GetArguments()
+	target, ok := args["target"].(string)
 	if !ok {
 		return nil, errors.New("target is required")
 	}
-	targetType, ok := request.Params.Arguments["targetType"].(string)
+	targetType, ok := args["targetType"].(string)
 	if !ok {
 		return nil, errors.New("targetType is required")
 	}
-	scanType, ok := request.Params.Arguments["scanType"].([]any)
+	scanType, ok := args["scanType"].([]any)
 	if !ok {
 		return nil, errors.New("scanType is required")
 	}
-	severities, ok := request.Params.Arguments["severities"].([]any)
+	severities, ok := args["severities"].([]any)
 	if !ok {
 		severities = []any{"CRITICAL", "HIGH", "MEDIUM", "LOW", "UNKNOWN"}
 	}
@@ -105,11 +107,11 @@ func parseScanArgs(request mcp.CallToolRequest) (*scanArgs, error) {
 	for i, st := range scanType {
 		scanTypeStr[i] = st.(string)
 	}
-	outputFormat, ok := request.Params.Arguments["outputFormat"].(string)
+	outputFormat, ok := args["outputFormat"].(string)
 	if !ok {
 		outputFormat = "json"
 	}
-	fixedOnlyBool, ok := request.Params.Arguments["fixedOnly"].(bool)
+	fixedOnlyBool, ok := args["fixedOnly"].(bool)
 	if !ok {
 		fixedOnlyBool = false
 	}
