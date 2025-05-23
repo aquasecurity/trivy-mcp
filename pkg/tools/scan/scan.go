@@ -16,7 +16,7 @@ import (
 	"github.com/aquasecurity/trivy/pkg/log"
 	"github.com/mark3labs/mcp-go/mcp"
 
-	_ "modernc.org/sqlite" // sqlite driver for RPM DB and Java DB
+	_ "modernc.org/sqlite" // sqlite driver for RPM DB and Java DB, this is needed for the scan
 )
 
 type ScanTools struct {
@@ -38,9 +38,8 @@ func NewScanTools(opts flag.Options, trivyTempDir string) *ScanTools {
 var (
 	ScanFilesystemTool = mcp.NewTool(
 		"scan_filesystem",
-		mcp.WithDescription(`Scan a local filesystem project for vulnerabilities, misconfigurations, licenses, and secrets issue using Trivy. \n
-		When the result is an embedded resource (like an SBOM), you MUST format the response as a clickable markdown link with the text set to "SBOM Results" and with the URI as the target of the link. \n
-		Do not include any other text or explanation with the link.".`),
+		mcp.WithDescription(`Scan a local filesystem project for vulnerabilities, misconfigurations, licenses, and secrets issue using Trivy. 
+Follow the instructions that are given in the response.`),
 		targetString,
 		scanTypeArray,
 		severityArray,
@@ -48,34 +47,38 @@ var (
 		fixedOnlyBool,
 		targetTypeString("filesystem"),
 		mcp.WithToolAnnotation(mcp.ToolAnnotation{
-			Title: "Scan filesystem and local projects with Trivy",
+			Title: "Scan local filesystem with Trivy",
 		}),
 	)
 
 	ScanImageTool = mcp.NewTool(
 		"scan_image",
-		mcp.WithDescription(`Scan a container image for vulnerabilities, misconfigurations, licenses, and secrets issue using Trivy \n
-		When the result is an embedded resource (like an SBOM), you MUST format the response as a clickable markdown link with the text set to the filename and the URI as the target of the link. \n
-		Do not include any other text or explanation with the link.".`),
+		mcp.WithDescription(`Scan a container image for vulnerabilities, misconfigurations, licenses, and secrets issue using Trivy
+Follow the instructions that are given in the response.`),
 		targetString,
 		scanTypeArray,
 		severityArray,
 		outputFormatString,
 		fixedOnlyBool,
 		targetTypeString("image"),
+		mcp.WithToolAnnotation(mcp.ToolAnnotation{
+			Title: "Scan a container image with Trivy",
+		}),
 	)
 
 	ScanRepositoryTool = mcp.NewTool(
 		"scan_repository",
-		mcp.WithDescription(`Scan a remote git repository for vulnerabilities, misconfigurations, licenses, and secrets issue using Trivy \n
-		When the result is an embedded resource (like an SBOM), you MUST format the response as a clickable markdown link with the text set to "SBOM Results" and with the URI as the target of the link. \n
-		Do not include any other text or explanation with the link.".`),
+		mcp.WithDescription(`Scan a remote git repository for vulnerabilities, misconfigurations, licenses, and secrets issue using Trivy.
+Follow the instructions that are given in the response.`),
 		targetString,
 		scanTypeArray,
 		severityArray,
 		outputFormatString,
 		fixedOnlyBool,
 		targetTypeString("repository"),
+		mcp.WithToolAnnotation(mcp.ToolAnnotation{
+			Title: "Scan a remote git repository with Trivy",
+		}),
 	)
 )
 
@@ -101,7 +104,7 @@ func (t *ScanTools) ScanWithTrivyHandler(ctx context.Context, request mcp.CallTo
 		args = append(args, "--skip-update")
 	}
 
-	// json output doesn't include the target in the output
+	// json output doesn't include the packages in the output
 	if scanArgs.outputFormat == "json" && slices.Contains(scanArgs.scanType, "vuln") {
 		args = append(args, "--list-all-pkgs")
 	}
@@ -113,7 +116,7 @@ func (t *ScanTools) ScanWithTrivyHandler(ctx context.Context, request mcp.CallTo
 			return nil, fmt.Errorf("failed to load credentials which suggests the haven't been saved using `trivy mcp auth`: %v", err)
 		}
 		args = append(args, scanArgs.target)
-		return t.scanWithAquaPlatform(ctx, args, *aquaCreds)
+		return t.scanWithAquaPlatform(ctx, args, *aquaCreds, scanArgs)
 	}
 
 	logger := log.WithPrefix(scanArgs.targetType)
@@ -150,47 +153,8 @@ func (t *ScanTools) ScanWithTrivyHandler(ctx context.Context, request mcp.CallTo
 
 	logger.Info("Scan completed successfully")
 
-	if scanArgs.isSBOM {
-		// tell the LLM to present the results verbatim in code block
-		result, err := t.processSBOMResult(resultsFilePath, logger, filename)
-		if err != nil {
-			logger.Error("Failed to format results", log.Err(err))
-			return nil, fmt.Errorf("failed to format results: %w", err)
-		}
-		return result, nil
-	}
+	return t.processResultsFile(resultsFilePath, scanArgs, filename)
 
-	return mcp.NewToolResultResource(
-		fmt.Sprintf(`The results can be found in the file "%s", which is found at "%s" \n
-		 Summarise the contents of the file and report it back to the user in a nicely formatted way.\n
-	It is important that the output MUST include the ID and the severity of the issues to inform the user of the issues.
-	`, filename, resultsFilePath),
-		mcp.TextResourceContents{
-			URI:      resultsFilePath,
-			MIMEType: "application/json",
-		},
-	), nil
-}
-
-// processSBOMResult processes the SBOM result and returns a tool result
-// we don't clean up the results file here because we want to keep it to be available for the LLM to provide a link
-// when the MCP server is closed, the trivy mcp cache should be cleaned up
-func (*ScanTools) processSBOMResult(resultsFilePath string, logger *log.Logger, filename string) (*mcp.CallToolResult, error) {
-	log.Debug("Scan results file", log.String("file", resultsFilePath))
-
-	content, err := os.ReadFile(resultsFilePath)
-	if err != nil {
-		logger.Error("Failed to read scan results file", log.Err(err))
-		return nil, errors.New("failed to read scan results file")
-	}
-
-	return mcp.NewToolResultResource(
-		fmt.Sprintf("The embedded resource is a human readable SBOM format. \nThe filename is %s and the URI is file://%s. \n", filename, resultsFilePath),
-		mcp.TextResourceContents{
-			URI:  resultsFilePath,
-			Text: string(content),
-		},
-	), nil
 }
 
 func getFilename(targetType, format string) string {

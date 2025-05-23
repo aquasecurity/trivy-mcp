@@ -18,11 +18,9 @@ func TestScanArgsCorrectlyParsed(t *testing.T) {
 			name: "Valid Arguments",
 			request: mcp.CallToolRequest{
 				Params: struct {
-					Name      string         `json:"name"`
-					Arguments map[string]any `json:"arguments,omitempty"`
-					Meta      *struct {
-						ProgressToken mcp.ProgressToken `json:"progressToken,omitempty"`
-					} `json:"_meta,omitempty"`
+					Name      string    `json:"name"`
+					Arguments any       `json:"arguments,omitempty"`
+					Meta      *mcp.Meta `json:"_meta,omitempty"`
 				}{
 					Name: "example",
 					Arguments: map[string]any{
