@@ -76,18 +76,19 @@ trivy mcp --use-aqua-platform
 
 Credentials are securely stored in the platform specific key chain.
 
-## Configuring the MCP Server in VSCode
+## Configuring the MCP Server for clients
+
+### VS Code
 
 Now, we need to configure the server in VSCode to start using as an agent
 
-### Prereqs
+#### Prereqs
 
 - \>= version 1.99.0 of VS Code
 
-### Configuring the plugin
 
+#### Configuring the plugin
 You can configure the Trivy mcp to start itself or use the sse http endpoint
-#### Configuring for stdio
 
 1. In VS Code, press `F1`
 2. Search for `"Preferences: Open User Settings (JSON)"`
@@ -99,8 +100,6 @@ You can configure the Trivy mcp to start itself or use the sse http endpoint
             "command": "trivy",
             "args": [
                "mcp",
-               "-t",
-               "stdio"
             ]
          }
       }
@@ -108,27 +107,45 @@ You can configure the Trivy mcp to start itself or use the sse http endpoint
    ```
 4. When you save, an annotation will appear to `Start` the server
 
-#### Configuring for SSE HTTP
+### JetBrains IDE
 
-1. Start the MCP Server
-   ```sh
-   trivy mcp -t sse -p 23456
-   ```
-2. In VS Code, press `F1`
-3. Search for `"Preferences: Open User Settings (JSON)"`
-4. Find or create the `"mcp"` block and add a server as below
+Configuring the JetBrains suite of IDEs requireds a recent version of the IDE and the CoPilot Extension
+
+1. Open CoPilot Chat and choose `Agent (Preview)` from the tabs at the top
+2. At the bottom of the chat window, select the tools icon and choose `Add More Tools...`
+3. The `mcp.json` file will be opened, add the following block up update the existing servers block to add `trivy`
    ```json
-   "mcp": {
-      "servers": {
-         "Trivy SSE": {
-            "type": "sse",
-            "url": "http://localhost:23456/sse"
+   {
+    "servers": {
+        "trivy": {
+            "type": "stdio",
+            "command": "trivy",
+            "args": ["mcp"]
+        }
+    }
+   }
+   ```
+
+### Claude Desktop
+
+MCP Servers can be added to the Claude Desktop app
+
+1. Open Settings and choose the `Developer` settings
+2. Click `Edit Config` button, and open the file it points you to - something like `claude_desktop_config.json`
+3. Add or update the servers block
+   ```json
+   {
+      "mcpServers": {
+         "trivy": {
+            "command": "trivy",
+            "args": [
+            "mcp"
+            ]
          }
       }
    }
-   ```
-5. When you save, an annotation will appear to `Start` the server
-
+   ````
+4. Restart Claude to pickup the config change and check Settings -> Developer to ensure it's been added
 
 
 ## Example Queries
