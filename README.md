@@ -2,21 +2,14 @@
 
 This plugin starts a Model Context Protocol (MCP) server that integrates Trivy's security scanning capabilities with VS Code and other MCP-enabled tools.
 
-> [!IMPORTANT]
-> This is early stage development of the MCP Server, so you should assume things won't work great for now
-
 - [Trivy MCP Server Plugin](#trivy-mcp-server-plugin)
   - [Features](#features)
   - [Installing the plugin](#installing-the-plugin)
   - [Starting the plugin](#starting-the-plugin)
     - [Available Options](#available-options)
-  - [Authentication](#authentication)
-    - [Available Auth Options](#available-auth-options)
   - [Configuring the MCP Server for clients](#configuring-the-mcp-server-for-clients)
     - [VS Code](#vs-code)
-      - [Getting the most in VS Code](#getting-the-most-in-vs-code)
     - [Cursor](#cursor)
-      - [Getting the most in Cursor](#getting-the-most-in-cursor)
     - [JetBrains IDE](#jetbrains-ide)
     - [Claude Desktop](#claude-desktop)
   - [Example Queries](#example-queries)
@@ -24,6 +17,8 @@ This plugin starts a Model Context Protocol (MCP) server that integrates Trivy's
     - [Container Image Scanning](#container-image-scanning)
     - [Repository Analysis](#repository-analysis)
     - [Advanced Usage](#advanced-usage)
+  - [Authentication](#authentication)
+    - [Available Auth Options](#available-auth-options)
 
 
 ## Features
@@ -64,38 +59,6 @@ trivy mcp
 | `--trivy-binary`    |                |         | Custom Trivy binary path (optional)                     |
 | `--use-aqua-platform`  / `a`      | `true/false`   | `false` | Enable Aqua Platform integration                        |
 | `--debug`           | `true/false`   | `false` | Enable debug logging                                    |
-
-
-
-## Authentication
-
-The MCP Server supports integration with Aqua Platform through the `auth` subcommand:
-
-```sh
-# Save Aqua Platform credentials
-trivy mcp auth login --key "YOUR_AQUA_KEY" --secret "YOUR_AQUA_SECRET" --region "YOUR_REGION"
-
-# Clear saved credentials
-trivy mcp auth logout
-
-# Verify saved credentials
-trivy mcp auth status
-```
-
-### Available Auth Options
-| Option            | Description                                    |
-| ---------------- | ---------------------------------------------- |
-| `--key`          | Aqua Platform API key                          |
-| `--secret`       | Aqua Platform API secret                       |
-| `--region`       | Aqua Platform region (e.g., 'us-east-1')      |
-
-After configuring credentials, you can use Aqua Platform features by starting the server with the `--use-aqua-platform` flag:
-
-```sh
-trivy mcp --use-aqua-platform
-```
-
-Credentials are securely stored in the platform specific key chain.
 
 ## Configuring the MCP Server for clients
 
@@ -266,3 +229,33 @@ Generate an SPDX SBOM and show me any dependency vulnerabilities
 ```text
 What security issues were fixed in the latest version of this image?
 ```
+
+## Authentication
+
+The MCP Server supports integration with Aqua Platform through the `auth` subcommand:
+
+```sh
+# Save Aqua Platform credentials
+trivy mcp auth login --key "YOUR_AQUA_KEY" --secret "YOUR_AQUA_SECRET" --region "YOUR_REGION"
+
+# Clear saved credentials
+trivy mcp auth logout
+
+# Verify saved credentials
+trivy mcp auth status
+```
+
+### Available Auth Options
+| Option            | Description                                    |
+| ---------------- | ---------------------------------------------- |
+| `--key`          | Aqua Platform API key                          |
+| `--secret`       | Aqua Platform API secret                       |
+| `--region`       | Aqua Platform region (e.g., 'us-east-1')      |
+
+After configuring credentials, you can use Aqua Platform features by starting the server with the `--use-aqua-platform` flag:
+
+```sh
+trivy mcp --use-aqua-platform
+```
+
+Credentials are securely stored in the platform specific key chain.
