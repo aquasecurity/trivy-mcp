@@ -5,6 +5,27 @@ This plugin starts a Model Context Protocol (MCP) server that integrates Trivy's
 > [!IMPORTANT]
 > This is early stage development of the MCP Server, so you should assume things won't work great for now
 
+- [Trivy MCP Server Plugin](#trivy-mcp-server-plugin)
+  - [Features](#features)
+  - [Installing the plugin](#installing-the-plugin)
+  - [Starting the plugin](#starting-the-plugin)
+    - [Available Options](#available-options)
+  - [Authentication](#authentication)
+    - [Available Auth Options](#available-auth-options)
+  - [Configuring the MCP Server for clients](#configuring-the-mcp-server-for-clients)
+    - [VS Code](#vs-code)
+      - [Getting the most in VS Code](#getting-the-most-in-vs-code)
+    - [Cursor](#cursor)
+      - [Getting the most in Cursor](#getting-the-most-in-cursor)
+    - [JetBrains IDE](#jetbrains-ide)
+    - [Claude Desktop](#claude-desktop)
+  - [Example Queries](#example-queries)
+    - [Local Project Analysis](#local-project-analysis)
+    - [Container Image Scanning](#container-image-scanning)
+    - [Repository Analysis](#repository-analysis)
+    - [Advanced Usage](#advanced-usage)
+
+
 ## Features
 
 - **Natural Language Scanning**: Ask questions about security issues in natural language
@@ -28,7 +49,7 @@ The will install the latest version of the plugin
 
 ## Starting the plugin
 
-You're now ready to start the plugin, this will launch an MCP server that Cursor or VSCode can interact with. For now, the instructions will focus on VSCode
+You're now ready to start the plugin, this will launch an MCP server that Cursor or VS Code can interact with. For now, the instructions will focus on VS Code
 
 ```sh
 trivy mcp
@@ -80,17 +101,11 @@ Credentials are securely stored in the platform specific key chain.
 
 ### VS Code
 
-Now, we need to configure the server in VSCode to start using as an agent
+Now, we need to configure the server in VS Code to start using as an agent. You need to by using >=v1.99.0 of VS Code
 
-#### Prereqs
-
-- \>= version 1.99.0 of VS Code
-
-
-#### Configuring the plugin
 You can configure the Trivy mcp to start itself or use the sse http endpoint
 
-1. In VS Code, press `F1`
+1. Press `F1` to open the command palette
 2. Search for `"Preferences: Open User Settings (JSON)"`
 3. Find or create the `"mcp"` block and add a server as below
    ```json
@@ -106,6 +121,64 @@ You can configure the Trivy mcp to start itself or use the sse http endpoint
    }
    ```
 4. When you save, an annotation will appear to `Start` the server
+
+#### Getting the most in VS Code
+
+If you want to get Trivy to run at sensible times, you can add a section to your `settings.json` to give a hint to VS Code
+
+1. Press `F1` to open the command palette
+2. Search for `"Preferences: Open User Settings (JSON)"`
+3. Add or update the `"github.copilot.chat.codeGeneration.instructions"` setting
+   > [!IMPORTANT]
+   > This text can be tuned by you to get the most out of the agent, it will likely change as we further improve the MCP Server
+
+   ```json
+   "github.copilot.chat.codeGeneration.instructions": [
+      {
+         "text": "After making changes to packages or manifest files, scan for security vulnerabilities.\n Fixes should only be according to the desired version reported by the scanner.If the scanner reports a fix unrelated to our change, ignore it.After performing the fix, scan the project for security vulnerabilities again. If changes are made to infrastructure as code files such as Terraform, CloudFormation, Kubernetes manifests, Dockerfiles etc, run a scan for security vulnerabilities and misconfigurations. Fixes should only be according to the desired version reported by the scanner. If the scanner reports a fix unrelated to our change, ignore it. After performing the fix, scan the project for security vulnerabilities and misconfigurations again."
+      }
+   ]
+   ```
+
+### Cursor
+
+Cursor is very similar to VS Code for configuration
+
+1. Press `F1` to open the command pallete
+2. Search for `"Cursor Settings"`
+3. On the opened Settings view, choose `MCP` from the left side bar
+4. Click `"Add new global MCP Server"`
+5. Add or update the `mcpServers` block
+   ```json
+   {
+      "mcpServers": {
+         "trivy": {
+            "type": "command",
+            "command": "trivy",
+            "args": [ "mcp"]
+         }
+      }
+   }
+   ```
+
+#### Getting the most in Cursor
+
+As with VSCode, you can add hints to run Trivy at sensible times
+
+1. Press `F1` to open the command pallete
+2. Search for `"Cursor Settings"`
+3. On the opened Settings view, choose `Rules` from the left side bar
+4. Add the following block to the `User Rules`
+   > [!IMPORTANT]
+   > This text can be tuned by you to get the most out of the agent, it will likely change as we further improve the MCP Server
+
+   ```text
+   After making changes in any of the package dependency/manifest files, scan the project for security vulnerabilities.
+   Fixes should only be according to the desired version reported by the scanner.
+   If the scanner reports a fix unrelated to our change, ignore it.
+   After performing the fix, scan the project for security vulnerabilities again.
+   ```
+
 
 ### JetBrains IDE
 
