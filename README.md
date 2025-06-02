@@ -89,11 +89,13 @@ You can configure the Trivy mcp to start itself or use the sse http endpoint
 
 If you want to get Trivy to run at sensible times, you can add a section to your `settings.json` to give a hint to VS Code
 
+> [!IMPORTANT]
+> This text can be tuned by you to get the most out of the agent, it will likely change as we further improve the MCP Server
+
 1. Press `F1` to open the command palette
 2. Search for `"Preferences: Open User Settings (JSON)"`
 3. Add or update the `"github.copilot.chat.codeGeneration.instructions"` setting
-   > [!IMPORTANT]
-   > This text can be tuned by you to get the most out of the agent, it will likely change as we further improve the MCP Server
+
 
    ```json
    "github.copilot.chat.codeGeneration.instructions": [
@@ -128,13 +130,13 @@ Cursor is very similar to VS Code for configuration
 
 As with VSCode, you can add hints to run Trivy at sensible times
 
+> [!IMPORTANT]
+> This text can be tuned by you to get the most out of the agent, it will likely change as we further improve the MCP Server
+
 1. Press `F1` to open the command pallete
 2. Search for `"Cursor Settings"`
 3. On the opened Settings view, choose `Rules` from the left side bar
 4. Add the following block to the `User Rules`
-   > [!IMPORTANT]
-   > This text can be tuned by you to get the most out of the agent, it will likely change as we further improve the MCP Server
-
    ```text
    After making changes in any of the package dependency/manifest files, scan the project for security vulnerabilities.
    Fixes should only be according to the desired version reported by the scanner.
