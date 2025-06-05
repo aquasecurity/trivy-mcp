@@ -1,6 +1,7 @@
 policy
 fanal
 windows
+linux
 
 trivy-mcp*
 plugin.yaml.bak
