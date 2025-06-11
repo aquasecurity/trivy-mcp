@@ -7,6 +7,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// skipCI skips the test if running in a CI environment
+// This is useful to avoid running tests that require user interaction or keyring access etc
 func skipCI(t *testing.T) {
 	if os.Getenv("GITHUB_ACTIONS") == "true" {
 		t.Skip("Skipping test in CI environment")
