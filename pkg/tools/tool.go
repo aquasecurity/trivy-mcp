@@ -42,28 +42,37 @@ func NewTrivyTools(opts flag.Options) *TrivyTools {
 }
 
 func (t *TrivyTools) AddTools(s *server.MCPServer) {
-	s.AddTools(
-		server.ServerTool{
-			Tool:    scan.ScanFilesystemTool,
-			Handler: t.scanTools.ScanWithTrivyHandler,
-		},
-		server.ServerTool{
-			Tool:    scan.ScanFilesystemTool,
-			Handler: t.scanTools.ScanWithTrivyHandler,
-		},
-		server.ServerTool{
-			Tool:    scan.ScanImageTool,
-			Handler: t.scanTools.ScanWithTrivyHandler,
-		},
-		server.ServerTool{
-			Tool:    scan.ScanRepositoryTool,
-			Handler: t.scanTools.ScanWithTrivyHandler,
-		},
-		server.ServerTool{
-			Tool:    version.TrivyVersionTool,
-			Handler: t.versionTools.TrivyVersionHandler,
-		},
-	)
+	var tools []server.ServerTool
+
+	if t.scanTools != nil {
+		tools = append(tools,
+			server.ServerTool{
+				Tool:    scan.ScanFilesystemTool,
+				Handler: t.scanTools.ScanWithTrivyHandler,
+			},
+			server.ServerTool{
+				Tool:    scan.ScanFilesystemTool,
+				Handler: t.scanTools.ScanWithTrivyHandler,
+			},
+			server.ServerTool{
+				Tool:    scan.ScanImageTool,
+				Handler: t.scanTools.ScanWithTrivyHandler,
+			},
+			server.ServerTool{
+				Tool:    scan.ScanRepositoryTool,
+				Handler: t.scanTools.ScanWithTrivyHandler,
+			})
+	}
+
+	if t.versionTools != nil {
+		tools = append(tools,
+			server.ServerTool{
+				Tool:    version.TrivyVersionTool,
+				Handler: t.versionTools.TrivyVersionHandler,
+			})
+	}
+
+	s.AddTools(tools...)
 }
 
 func (t *TrivyTools) Cleanup() {

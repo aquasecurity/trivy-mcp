@@ -14,6 +14,15 @@ test:
 	go test -v ./... -ldflags "-X github.com/aquasecurity/trivy-mcp/pkg/version.TrivyVersion=$${trivy_version}" -coverprofile=coverage.out -covermode=atomic
 	@echo "Tests completed."
 
+.PHONY: coverage
+coverage:
+	@echo "Generating coverage report..."
+	@trivy_version=$$(cat go.mod | grep 'github.com/aquasecurity/trivy v' | awk '{ print $$2}') ;\
+	echo Current trivy version: $$trivy_version ;\
+	go test -v ./... -ldflags "-X github.com/aquasecurity/trivy-mcp/pkg/version.TrivyVersion=$${trivy_version}" -coverprofile=coverage.out -covermode=atomic
+	@go tool cover -html=coverage.out -o coverage.html
+	@echo "Coverage report generated: coverage.html"
+
 .PHONY: build
 build: clean $(OUTPUTS)
 %/trivy-mcp:
