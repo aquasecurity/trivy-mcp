@@ -20,20 +20,20 @@ func TestNewScanTools(t *testing.T) {
 		{
 			name:      "all defaults",
 			opts:      flag.Options{},
-			tmpDir:    "/tmp",
+			tmpDir:    t.TempDir(),
 			wantBin:   "",
 			wantDebug: false,
 			wantAqua:  false,
-			wantTmp:   "/tmp",
+			wantTmp:   t.TempDir(),
 		},
 		{
 			name:      "custom binary and debug",
 			opts:      flag.Options{TrivyBinary: "/usr/local/bin/trivy", Debug: true, UseAquaPlatform: true},
-			tmpDir:    "/custom",
+			tmpDir:    t.TempDir(),
 			wantBin:   "/usr/local/bin/trivy",
 			wantDebug: true,
 			wantAqua:  true,
-			wantTmp:   "/custom",
+			wantTmp:   t.TempDir(),
 		},
 	}
 	for _, tt := range tests {
