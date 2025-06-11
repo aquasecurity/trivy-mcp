@@ -15,7 +15,6 @@ func TestNewScanTools(t *testing.T) {
 		wantBin   string
 		wantDebug bool
 		wantAqua  bool
-		wantTmp   string
 	}{
 		{
 			name:      "all defaults",
@@ -24,7 +23,6 @@ func TestNewScanTools(t *testing.T) {
 			wantBin:   "",
 			wantDebug: false,
 			wantAqua:  false,
-			wantTmp:   t.TempDir(),
 		},
 		{
 			name:      "custom binary and debug",
@@ -33,7 +31,6 @@ func TestNewScanTools(t *testing.T) {
 			wantBin:   "/usr/local/bin/trivy",
 			wantDebug: true,
 			wantAqua:  true,
-			wantTmp:   t.TempDir(),
 		},
 	}
 	for _, tt := range tests {
@@ -42,7 +39,7 @@ func TestNewScanTools(t *testing.T) {
 			assert.Equal(t, tt.wantBin, st.trivyBinary)
 			assert.Equal(t, tt.wantDebug, st.debug)
 			assert.Equal(t, tt.wantAqua, st.useAquaPlatform)
-			assert.Equal(t, tt.wantTmp, st.trivyTempDir)
+			assert.Equal(t, tt.tmpDir, st.trivyTempDir)
 		})
 	}
 }
