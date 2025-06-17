@@ -1,5 +1,7 @@
 # Trivy MCP Server Plugin
 
+[![GitHub All Releases](https://img.shields.io/github/downloads/aquasecurity/trivy-mcp/total)](https://github.com/aquasecurity/trivy-mcp/releases)
+
 This plugin starts a Model Context Protocol (MCP) server that integrates Trivy's security scanning capabilities with VS Code and other MCP-enabled tools.
 
 ## Features
