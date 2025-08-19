@@ -18,8 +18,8 @@ jobs:
 
       - name: Check if manifest is updated
         run: |
-          make bump-manifest
-          if [ -n "$(git status --porcelain plugin.yaml)" ]; then
+          current_version=$$(cat plugin.yaml | grep 'version' | awk '{ print $$2}' | tr -d '"') ;
+          if [ "$$current_version" != "$$NEW_VERSION" ]; then
             echo "The version of the plugin in manifest is not updated. Please run 'NEW_VERSION=version make bump-manifest'"
             exit 1
           fi
