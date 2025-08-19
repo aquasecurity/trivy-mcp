@@ -70,16 +70,7 @@ func (t *ScanTools) scanWithAquaPlatform(ctx context.Context, args []string, cre
 
 	filename := "trivy-mcp-scan.results.json"
 	resultsFilePath := filepath.Join(os.TempDir(), filename)
-	defer func() {
-		if err := os.Remove(resultsFilePath); err != nil {
-			logger.Error("Failed to remove temp file", log.Err(err))
-		}
-	}()
-
-	if err := os.Setenv("AQUA_ASSURANCE_EXPORT", resultsFilePath); err != nil {
-		logger.Error("Failed to set Aqua assurance export in environment variables", log.Err(err))
-		return nil, err
-	}
+	args = append(args, "--output", resultsFilePath)
 
 	if err := plugin.Run(ctx, "aqua", plugin.Options{Args: args}); err != nil {
 		logger.Error("Failed to run Aqua plugin", log.Err(err))

@@ -58,8 +58,8 @@ add-plugin-manifest:
 		echo "Plugin manifest already exists."; \
 	fi
 
-.PHONY: install-plugin
-install-plugin: add-plugin-manifest
+.PHONY: install
+install: add-plugin-manifest
 	@echo "Installing plugin..."
 	@trivy_version=$$(cat go.mod | grep 'github.com/aquasecurity/trivy v' | awk '{ print $$2}') ;\
 	echo Current trivy version: $$trivy_version ;\
