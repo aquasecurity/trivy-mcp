@@ -18,9 +18,9 @@ jobs:
 
       - name: Check if manifest is updated
         run: |
-          current_version=$$(cat plugin.yaml | grep 'version' | awk '{ print $$2}' | tr -d '"') ;
-          if [ "$$current_version" != "$$NEW_VERSION" ]; then
-            echo "The version of the plugin in manifest is not updated. Please run 'NEW_VERSION=version make bump-manifest'"
+          current_version=$(cat plugin.yaml | grep 'version' | awk '{ print $2}' | tr -d '"') ;
+          if [ "$current_version" != "$NEW_VERSION" ]; then
+            echo "The version of the plugin in manifest is not updated. Please run 'make bump-manifest'"
             exit 1
           fi
 
