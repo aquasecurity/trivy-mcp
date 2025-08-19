@@ -18,7 +18,7 @@ Normally, when installing a Trivy plugin you would do `trivy plugin install <plu
    ```
 2. Install the plugin
    ```ssh
-   make install-plugin
+   make install
    ```
 
 ## Run the MCP Server
