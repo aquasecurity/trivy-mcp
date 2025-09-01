@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"strings"
 
 	"path/filepath"
 
@@ -31,6 +32,9 @@ func (t *ScanTools) scanWithAquaPlatform(ctx context.Context, args []string, cre
 	logger.Debug("Aqua URL", log.Any("AquaURL", aquaURL))
 	logger.Debug("CSPM URL", log.Any("CSPMURL", cspmURL))
 
+	assuranceFilename := "trivy-mcp-scan.assurance.json"
+	assuranceResultFilePath := filepath.Join(os.TempDir(), assuranceFilename)
+
 	// Set the Aqua credentials in the environment variables
 	if err := os.Setenv("AQUA_KEY", creds.AquaKey); err != nil {
 		logger.Error("Failed to set Aqua key in environment variables", log.Err(err))
@@ -46,6 +50,22 @@ func (t *ScanTools) scanWithAquaPlatform(ctx context.Context, args []string, cre
 	}
 	if err := os.Setenv("AQUA_URL", aquaURL); err != nil {
 		logger.Error("Failed to set Aqua URL in environment variables", log.Err(err))
+		return nil, err
+	}
+	if err := os.Setenv("AQUA_ASSURANCE_EXPORT", assuranceResultFilePath); err != nil {
+		logger.Error("Failed to set AQUA_ASSURANCE_EXPORT in environment variables", log.Err(err))
+		return nil, err
+	}
+	if err := os.Setenv("TRIVY_SKIP_REPOSITORY_UPLOAD", "true"); err != nil {
+		logger.Error("Failed to set AQUA_ASSURANCE_EXPORT in environment variables", log.Err(err))
+		return nil, err
+	}
+	if err := os.Setenv("TRIVY_SKIP_RESULT_UPLOAD", "true"); err != nil {
+		logger.Error("Failed to set TRIVY_SKIP_RESULT_UPLOAD in environment variables", log.Err(err))
+		return nil, err
+	}
+	if err := os.Setenv("TRIVY_IDE_IDENTIFIER", "mcp"); err != nil {
+		logger.Error("Failed to set TRIVY_IDE_IDENTIFIER in environment variables", log.Err(err))
 		return nil, err
 	}
 
@@ -64,6 +84,18 @@ func (t *ScanTools) scanWithAquaPlatform(ctx context.Context, args []string, cre
 		if err := os.Unsetenv("AQUA_URL"); err != nil {
 			logger.Error("Failed to unset Aqua URL in environment variables", log.Err(err))
 		}
+		if err := os.Unsetenv("AQUA_ASSURANCE_EXPORT"); err != nil {
+			logger.Error("Failed to unset AQUA_ASSURANCE_EXPORT in environment variables", log.Err(err))
+		}
+		if err := os.Unsetenv("TRIVY_SKIP_REPOSITORY_UPLOAD"); err != nil {
+			logger.Error("Failed to unset TRIVY_SKIP_REPOSITORY_UPLOAD in environment variables", log.Err(err))
+		}
+		if err := os.Unsetenv("TRIVY_SKIP_RESULT_UPLOAD"); err != nil {
+			logger.Error("Failed to unset TRIVY_SKIP_RESULT_UPLOAD in environment variables", log.Err(err))
+		}
+		if err := os.Unsetenv("TRIVY_IDE_IDENTIFIER"); err != nil {
+			logger.Error("Failed to unset TRIVY_IDE_IDENTIFIER in environment variables", log.Err(err))
+		}
 	}()
 
 	logger.Debug("Environment", log.Any("ENV", os.Environ()))
@@ -72,10 +104,21 @@ func (t *ScanTools) scanWithAquaPlatform(ctx context.Context, args []string, cre
 	resultsFilePath := filepath.Join(os.TempDir(), filename)
 	args = append(args, "--output", resultsFilePath)
 
-	if err := plugin.Run(ctx, "aqua", plugin.Options{Args: args}); err != nil {
+	// error code 13 means the assurance policy failed
+	if err := plugin.Run(ctx, "aqua", plugin.Options{Args: args}); err != nil && !strings.Contains(err.Error(), "exit status 13") {
 		logger.Error("Failed to run Aqua plugin", log.Err(err))
-		return nil, err
+		// return nil, err
 	}
 
-	return t.processResultsFile(resultsFilePath, scanArgs, filename)
+	resultString, err := t.processResultsFile(resultsFilePath, scanArgs, filename)
+	if err != nil {
+		return nil, errors.New("failed to process scan results")
+	}
+
+	assuranceResultString, err := t.processAssurancePolicyResults(assuranceResultFilePath)
+	if err != nil {
+		return nil, errors.New("failed to process assurance policy results")
+	}
+
+	return mcp.NewToolResultText(resultString.String() + assuranceResultString.String()), nil
 }
