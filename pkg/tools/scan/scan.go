@@ -153,8 +153,11 @@ func (t *ScanTools) ScanWithTrivyHandler(ctx context.Context, request mcp.CallTo
 
 	logger.Info("Scan completed successfully")
 
-	return t.processResultsFile(resultsFilePath, scanArgs, filename)
-
+	sb, err := t.processResultsFile(resultsFilePath, scanArgs, filename)
+	if err != nil {
+		return nil, errors.New("failed to process scan results")
+	}
+	return mcp.NewToolResultText(sb.String()), nil
 }
 
 func getFilename(targetType, format string) string {
