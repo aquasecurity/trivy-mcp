@@ -104,7 +104,7 @@ func (t *ScanTools) processAssurancePolicyResults(resultsFilePath string) (strin
 				resultString.WriteString(fmt.Sprintf(" - Policy Name: %s\n", pr.PolicyName))
 				resultString.WriteString(fmt.Sprintf(" - Policy ID: %s\n", pr.PolicyID))
 				resultString.WriteString(fmt.Sprintf(" - Reason: %s\n", pr.Reason))
-				resultString.WriteString("Assurance policy failures are important and should be reported to the user\n	")
+				resultString.WriteString("Assurance policy failures are important and should be reported to the user\n")
 			}
 		}
 	}

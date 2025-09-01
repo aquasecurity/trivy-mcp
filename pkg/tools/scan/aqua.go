@@ -56,6 +56,7 @@ func (t *ScanTools) scanWithAquaPlatform(ctx context.Context, args []string, cre
 		logger.Error("Failed to set AQUA_ASSURANCE_EXPORT in environment variables", log.Err(err))
 		return nil, err
 	}
+	if err := os.Setenv("TRIVY_SKIP_REPOSITORY_UPLOAD", "true"); err != nil {
 		logger.Error("Failed to set TRIVY_SKIP_REPOSITORY_UPLOAD in environment variables", log.Err(err))
 		return nil, err
 	}
@@ -106,7 +107,6 @@ func (t *ScanTools) scanWithAquaPlatform(ctx context.Context, args []string, cre
 	// error code 13 means the assurance policy failed
 	if err := plugin.Run(ctx, "aqua", plugin.Options{Args: args}); err != nil && !strings.Contains(err.Error(), "exit status 13") {
 		logger.Error("Failed to run Aqua plugin", log.Err(err))
-		// return nil, err
 	}
 
 	resultString, err := t.processResultsFile(resultsFilePath, scanArgs, filename)
