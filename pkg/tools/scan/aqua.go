@@ -56,8 +56,7 @@ func (t *ScanTools) scanWithAquaPlatform(ctx context.Context, args []string, cre
 		logger.Error("Failed to set AQUA_ASSURANCE_EXPORT in environment variables", log.Err(err))
 		return nil, err
 	}
-	if err := os.Setenv("TRIVY_SKIP_REPOSITORY_UPLOAD", "true"); err != nil {
-		logger.Error("Failed to set AQUA_ASSURANCE_EXPORT in environment variables", log.Err(err))
+		logger.Error("Failed to set TRIVY_SKIP_REPOSITORY_UPLOAD in environment variables", log.Err(err))
 		return nil, err
 	}
 	if err := os.Setenv("TRIVY_SKIP_RESULT_UPLOAD", "true"); err != nil {
