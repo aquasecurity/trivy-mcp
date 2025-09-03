@@ -50,6 +50,13 @@ Or with the shorthand flag:
 trivy mcp -a
 ```
 
+When Aqua Platform integration is enabled, scans will include:
+- Enhanced vulnerability detection
+- **Assurance policy evaluation** - automatic compliance checking against your organization's security policies
+- Advanced reporting and analytics
+
+Policy failures are prominently displayed and marked as high-priority issues that must be addressed.
+
 ## Debug Mode
 
 For troubleshooting or development purposes, you can enable debug logging:
