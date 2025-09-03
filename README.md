@@ -11,10 +11,9 @@ This plugin starts a Model Context Protocol (MCP) server that integrates Trivy's
   - Filesystem scanning for local projects
   - Container image vulnerability scanning
   - Remote repository security analysis
-- **Integration with Aqua Platform**: Optional integration with Aqua Security's platform for enhanced scanning capabilities
+- **Integration with Aqua Platform**: Optional integration with Aqua Security's platform for enhanced scanning capabilities and **assurance policy compliance**
 - **Flexible Transport**: Support for both stdio and SSE (Server-Sent Events) transport protocols
 - **IDE Integration**: Seamless integration with VS Code, Cursor, JetBrains IDEs, and Claude Desktop
-- **Integration with Aqua Platform**: Optional integration with Aqua Security's platform for enhanced scanning capabilities and **assurance policy compliance**
 
 ## Quick Start
 
@@ -54,6 +53,15 @@ Are there any vulnerabilities or misconfigurations in this project?
 ```
 
 For more examples, see the [Example Queries](./docs/example-queries.md) page.
+
+## Demo
+
+See the plugin in action:
+
+<video width="800" controls>
+  <source src=".github/media/trivy_code_then_scan.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
 
 ## License
 
