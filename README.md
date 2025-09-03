@@ -56,6 +56,8 @@ For more examples, see the [Example Queries](./docs/example-queries.md) page.
 
 ## Demo
 
+In the quick demo below, I cover what Trivy MCP Server can help you achieve. Turn up the volume to hear a running commentary
+
 https://github.com/user-attachments/assets/125791b0-3164-4dcc-8fb3-e45481a9cbf7
 
 ## License
