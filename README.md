@@ -14,6 +14,7 @@ This plugin starts a Model Context Protocol (MCP) server that integrates Trivy's
 - **Integration with Aqua Platform**: Optional integration with Aqua Security's platform for enhanced scanning capabilities
 - **Flexible Transport**: Support for both stdio and SSE (Server-Sent Events) transport protocols
 - **IDE Integration**: Seamless integration with VS Code, Cursor, JetBrains IDEs, and Claude Desktop
+- **Integration with Aqua Platform**: Optional integration with Aqua Security's platform for enhanced scanning capabilities and **assurance policy compliance**
 
 ## Quick Start
 

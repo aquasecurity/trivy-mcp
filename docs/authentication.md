@@ -55,3 +55,20 @@ Or using the shorthand flag:
 ```sh
 trivy mcp -a
 ```
+
+## Assurance Policy Support
+
+When using Aqua Platform integration, the MCP server automatically evaluates assurance policies during scans. Assurance policies define security and compliance rules that must be met.
+
+### Policy Evaluation
+
+Assurance policies are automatically evaluated when scanning with Aqua Platform integration enabled. Policy failures are prominently displayed in scan results with:
+
+- ⚠️ **Policy failure warnings** that must be addressed
+- **Policy name and ID** for identification  
+- **Failure reason** explaining why the policy failed
+- **Priority indication** that these issues require immediate attention
+
+### Exit Codes
+
+When assurance policies fail, Trivy may return exit code 13, which is handled gracefully by the MCP server while still reporting the policy failures.

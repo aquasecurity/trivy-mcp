@@ -63,3 +63,19 @@ Generate an SPDX SBOM and show me any dependency vulnerabilities
 ```
 What security issues were fixed in the latest version of this image?
 ```
+
+## Assurance Policy Queries (Aqua Platform)
+
+When using Aqua Platform integration, you can ask about policy compliance:
+
+```
+Are there any assurance policy failures in this project?
+```
+
+```
+Check this codebase for compliance with our security policies
+```
+
+```
+What security policies are failing and how can I fix them?
+```
