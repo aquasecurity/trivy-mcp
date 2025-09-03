@@ -56,12 +56,7 @@ For more examples, see the [Example Queries](./docs/example-queries.md) page.
 
 ## Demo
 
-See the plugin in action:
-
-<video width="800" controls>
-  <source src=".github/media/trivy_code_then_scan.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+https://github.com/user-attachments/assets/125791b0-3164-4dcc-8fb3-e45481a9cbf7
 
 ## License
 
