@@ -9,3 +9,5 @@ mcp
 
 .env
 .vscode
+
+coverage*
