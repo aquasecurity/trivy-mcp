@@ -5,7 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/aquasecurity/trivy-mcp/pkg/findings"
 	"github.com/aquasecurity/trivy-mcp/pkg/flag"
+	"github.com/aquasecurity/trivy-mcp/pkg/tools/result"
 	"github.com/aquasecurity/trivy-mcp/pkg/tools/scan"
 	"github.com/aquasecurity/trivy-mcp/pkg/tools/version"
 	"github.com/aquasecurity/trivy/pkg/log"
@@ -20,6 +22,7 @@ type TrivyTool struct {
 
 type TrivyTools struct {
 	scanTools    *scan.ScanTools
+	resultsTools *result.ResultsTools
 	versionTools *version.VersionTools
 	trivyTempDir string
 }
@@ -34,8 +37,11 @@ func NewTrivyTools(opts flag.Options) *TrivyTools {
 		log.Error("Failed to create temp dir", log.Err(err))
 	}
 
+	findingStore := findings.NewStore()
+
 	return &TrivyTools{
-		scanTools:    scan.NewScanTools(opts, trivyTempDir),
+		scanTools:    scan.NewScanTools(opts, trivyTempDir, findingStore),
+		resultsTools: result.NewResultsTools(findingStore),
 		versionTools: version.NewVersionTools(opts, trivyTempDir),
 		trivyTempDir: filepath.Join(os.TempDir(), "trivy"),
 	}
@@ -69,6 +75,18 @@ func (t *TrivyTools) AddTools(s *server.MCPServer) {
 			server.ServerTool{
 				Tool:    version.TrivyVersionTool,
 				Handler: t.versionTools.TrivyVersionHandler,
+			})
+	}
+
+	if t.resultsTools != nil {
+		tools = append(tools,
+			server.ServerTool{
+				Tool:    result.ListTool,
+				Handler: t.resultsTools.ListHandler,
+			},
+			server.ServerTool{
+				Tool:    result.GetTool,
+				Handler: t.resultsTools.GetHandler,
 			})
 	}
 

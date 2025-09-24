@@ -3,6 +3,7 @@ package scan
 import (
 	"testing"
 
+	"github.com/aquasecurity/trivy-mcp/pkg/findings"
 	"github.com/aquasecurity/trivy-mcp/pkg/flag"
 	"github.com/stretchr/testify/assert"
 )
@@ -35,7 +36,7 @@ func TestNewScanTools(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			st := NewScanTools(tt.opts, tt.tmpDir)
+			st := NewScanTools(tt.opts, tt.tmpDir, findings.NewStore())
 			assert.Equal(t, tt.wantBin, st.trivyBinary)
 			assert.Equal(t, tt.wantDebug, st.debug)
 			assert.Equal(t, tt.wantAqua, st.useAquaPlatform)

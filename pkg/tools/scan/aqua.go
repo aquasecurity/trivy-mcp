@@ -2,15 +2,20 @@ package scan
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 
 	"path/filepath"
 
 	"github.com/aquasecurity/trivy-mcp/internal/creds"
+	"github.com/aquasecurity/trivy-mcp/pkg/findings"
+	aquatypes "github.com/aquasecurity/trivy-mcp/pkg/types"
 	"github.com/aquasecurity/trivy/pkg/log"
 	"github.com/aquasecurity/trivy/pkg/plugin"
+	"github.com/google/uuid"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -35,66 +40,32 @@ func (t *ScanTools) scanWithAquaPlatform(ctx context.Context, args []string, cre
 	assuranceFilename := "trivy-mcp-scan.assurance.json"
 	assuranceResultFilePath := filepath.Join(os.TempDir(), assuranceFilename)
 
-	// Set the Aqua credentials in the environment variables
-	if err := os.Setenv("AQUA_KEY", creds.AquaKey); err != nil {
-		logger.Error("Failed to set Aqua key in environment variables", log.Err(err))
-		return nil, err
+	var envMap = map[string]string{
+		"AQUA_KEY":                     creds.AquaKey,
+		"AQUA_SECRET":                  creds.AquaSecret,
+		"CSPM_URL":                     cspmURL,
+		"AQUA_URL":                     aquaURL,
+		"AQUA_ASSURANCE_EXPORT":        assuranceResultFilePath,
+		"TRIVY_SKIP_REPOSITORY_UPLOAD": "true",
+		"TRIVY_SKIP_RESULT_UPLOAD":     "true",
+		"TRIVY_IDE_IDENTIFIER":         "mcp",
+		"GRADLE":                       "1",
+		"DOTNET_PROJ":                  "1",
+		"SAST":                         "1",
 	}
-	if err := os.Setenv("AQUA_SECRET", creds.AquaSecret); err != nil {
-		logger.Error("Failed to set Aqua secret in environment variables", log.Err(err))
-		return nil, err
-	}
-	if err := os.Setenv("CSPM_URL", cspmURL); err != nil {
-		logger.Error("Failed to set CSPM URL in environment variables", log.Err(err))
-		return nil, err
-	}
-	if err := os.Setenv("AQUA_URL", aquaURL); err != nil {
-		logger.Error("Failed to set Aqua URL in environment variables", log.Err(err))
-		return nil, err
-	}
-	if err := os.Setenv("AQUA_ASSURANCE_EXPORT", assuranceResultFilePath); err != nil {
-		logger.Error("Failed to set AQUA_ASSURANCE_EXPORT in environment variables", log.Err(err))
-		return nil, err
-	}
-	if err := os.Setenv("TRIVY_SKIP_REPOSITORY_UPLOAD", "true"); err != nil {
-		logger.Error("Failed to set TRIVY_SKIP_REPOSITORY_UPLOAD in environment variables", log.Err(err))
-		return nil, err
-	}
-	if err := os.Setenv("TRIVY_SKIP_RESULT_UPLOAD", "true"); err != nil {
-		logger.Error("Failed to set TRIVY_SKIP_RESULT_UPLOAD in environment variables", log.Err(err))
-		return nil, err
-	}
-	if err := os.Setenv("TRIVY_IDE_IDENTIFIER", "mcp"); err != nil {
-		logger.Error("Failed to set TRIVY_IDE_IDENTIFIER in environment variables", log.Err(err))
-		return nil, err
+
+	for key, value := range envMap {
+		if err := os.Setenv(key, value); err != nil {
+			logger.Error("Failed to set environment variable", log.String("key", key), log.String("value", value), log.Err(err))
+			return nil, err
+		}
 	}
 
 	defer func() {
-		// clear the environment variables after the scan
-		// This is important to avoid leaking credentials
-		if err := os.Unsetenv("AQUA_KEY"); err != nil {
-			logger.Error("Failed to unset Aqua key in environment variables", log.Err(err))
-		}
-		if err := os.Unsetenv("AQUA_SECRET"); err != nil {
-			logger.Error("Failed to unset Aqua secret in environment variables", log.Err(err))
-		}
-		if err := os.Unsetenv("CSPM_URL"); err != nil {
-			logger.Error("Failed to unset CSPM URL in environment variables", log.Err(err))
-		}
-		if err := os.Unsetenv("AQUA_URL"); err != nil {
-			logger.Error("Failed to unset Aqua URL in environment variables", log.Err(err))
-		}
-		if err := os.Unsetenv("AQUA_ASSURANCE_EXPORT"); err != nil {
-			logger.Error("Failed to unset AQUA_ASSURANCE_EXPORT in environment variables", log.Err(err))
-		}
-		if err := os.Unsetenv("TRIVY_SKIP_REPOSITORY_UPLOAD"); err != nil {
-			logger.Error("Failed to unset TRIVY_SKIP_REPOSITORY_UPLOAD in environment variables", log.Err(err))
-		}
-		if err := os.Unsetenv("TRIVY_SKIP_RESULT_UPLOAD"); err != nil {
-			logger.Error("Failed to unset TRIVY_SKIP_RESULT_UPLOAD in environment variables", log.Err(err))
-		}
-		if err := os.Unsetenv("TRIVY_IDE_IDENTIFIER"); err != nil {
-			logger.Error("Failed to unset TRIVY_IDE_IDENTIFIER in environment variables", log.Err(err))
+		for key := range envMap {
+			if err := os.Unsetenv(key); err != nil {
+				logger.Error("Failed to unset environment variable", log.String("key", key), log.Err(err))
+			}
 		}
 	}()
 
@@ -109,15 +80,54 @@ func (t *ScanTools) scanWithAquaPlatform(ctx context.Context, args []string, cre
 		logger.Error("Failed to run Aqua plugin", log.Err(err))
 	}
 
-	resultString, err := t.processResultsFile(resultsFilePath, scanArgs, filename)
+	res, err := os.Open(assuranceResultFilePath)
 	if err != nil {
-		return nil, errors.New("failed to process scan results")
+		return nil, errors.New("failed to open scan results file")
+	}
+	defer func() { _ = res.Close() }()
+
+	var rep aquatypes.AssuranceReport
+	if err := json.NewDecoder(res).Decode(&rep); err != nil {
+		return nil, errors.New("failed to decode scan results file")
 	}
 
-	assuranceResultString, err := t.processAssurancePolicyResults(assuranceResultFilePath)
-	if err != nil {
-		return nil, errors.New("failed to process assurance policy results")
+	fs, policyFailures, fp := findings.AssuranceReportToFindings(rep)
+
+	batchID := uuid.New().String()
+	t.findingStore.PutBatch(batchID, fs)
+	t.findingStore.PutBatchWithPolicies(batchID, fs, policyFailures)
+
+	counts := make(map[string]map[findings.Severity]int)
+	for _, f := range fs {
+		if _, ok := counts[f.ArtifactType]; !ok {
+			counts[f.ArtifactType] = make(map[findings.Severity]int)
+		}
+		counts[f.ArtifactType][f.Severity]++
 	}
 
-	return mcp.NewToolResultText(resultString.String() + assuranceResultString.String()), nil
+	scanResp := ScanResponse{
+		BatchID:                      batchID,
+		Fingerprint:                  fp,
+		Counts:                       counts,
+		AssurancePolicyFailureCounts: len(policyFailures),
+		Meta: map[string]string{
+			"target":       scanArgs.target,
+			"targetType":   scanArgs.targetType,
+			"scanType":     strings.Join(scanArgs.scanType, ","),
+			"severities":   strings.Join(scanArgs.severities, ","),
+			"outputFormat": scanArgs.outputFormat,
+			"fixedOnly":    fmt.Sprintf("%t", scanArgs.fixedOnly),
+		},
+		Next: Next{
+			Tool: "findings_list",
+			Why:  "To see the list of findings",
+		},
+	}
+
+	scanRespJSON, err := json.Marshal(scanResp)
+	if err != nil {
+		return nil, errors.New("failed to marshal scan response")
+	}
+
+	return mcp.NewToolResultText(string(scanRespJSON)), nil
 }

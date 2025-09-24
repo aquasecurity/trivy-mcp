@@ -46,7 +46,6 @@ func NewMcpServer(opts flag.Options) *McpServer {
 		"Trivy MCP Server 🚀",
 		version.Version,
 	)
-
 	return &McpServer{
 		Server:    s,
 		Transport: opts.Transport,

@@ -76,7 +76,7 @@ run:
 .PHONY: format
 format:
 	@echo "Running gofmt..."
-	@gofmt -w -s -d .  
+	@gofmt -w .  
 
 .PHONY: lint
 lint:

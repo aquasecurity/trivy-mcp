@@ -2,6 +2,7 @@ package scan
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -11,9 +12,12 @@ import (
 	"strings"
 
 	"github.com/aquasecurity/trivy-mcp/internal/creds"
+	"github.com/aquasecurity/trivy-mcp/pkg/findings"
 	"github.com/aquasecurity/trivy-mcp/pkg/flag"
 	"github.com/aquasecurity/trivy/pkg/commands"
 	"github.com/aquasecurity/trivy/pkg/log"
+	"github.com/aquasecurity/trivy/pkg/types"
+	"github.com/google/uuid"
 	"github.com/mark3labs/mcp-go/mcp"
 
 	_ "modernc.org/sqlite" // sqlite driver for RPM DB and Java DB, this is needed for the scan
@@ -24,14 +28,32 @@ type ScanTools struct {
 	debug           bool
 	useAquaPlatform bool
 	trivyTempDir    string
+	findingStore    *findings.Store
 }
 
-func NewScanTools(opts flag.Options, trivyTempDir string) *ScanTools {
+type Next struct {
+	Tool    string         `json:"tool,omitempty"`    // "findings.list"
+	Args    map[string]any `json:"args,omitempty"`    // pre-filled args
+	Why     string         `json:"why,omitempty"`     // 1 sentence hint
+	Preview []string       `json:"preview,omitempty"` // first few finding IDs
+}
+
+type ScanResponse struct {
+	BatchID                      string                               `json:"batch_id"`
+	Fingerprint                  string                               `json:"fingerprint"` // hash of normalized content
+	Counts                       map[string]map[findings.Severity]int `json:"counts"`      // by severity/category for quick glance
+	AssurancePolicyFailureCounts int                                  `json:"assurance_policy_failure_counts,omitempty"`
+	Meta                         map[string]string                    `json:"meta,omitempty"`
+	Next                         Next                                 `json:"next"`
+}
+
+func NewScanTools(opts flag.Options, trivyTempDir string, findingStore *findings.Store) *ScanTools {
 	return &ScanTools{
 		trivyBinary:     opts.TrivyBinary,
 		debug:           opts.Debug,
 		useAquaPlatform: opts.UseAquaPlatform,
 		trivyTempDir:    trivyTempDir,
+		findingStore:    findingStore,
 	}
 }
 
@@ -153,11 +175,54 @@ func (t *ScanTools) ScanWithTrivyHandler(ctx context.Context, request mcp.CallTo
 
 	logger.Info("Scan completed successfully")
 
-	sb, err := t.processResultsFile(resultsFilePath, scanArgs, filename)
+	res, err := os.Open(resultsFilePath)
 	if err != nil {
-		return nil, errors.New("failed to process scan results")
+		return nil, errors.New("failed to open scan results file")
 	}
-	return mcp.NewToolResultText(sb.String()), nil
+	defer func() { _ = res.Close() }()
+
+	var rep types.Report
+	if err := json.NewDecoder(res).Decode(&rep); err != nil {
+		return nil, errors.New("failed to decode scan results file")
+	}
+
+	fs, fp := findings.ReportToFindings(rep)
+
+	batchID := uuid.New().String()
+	t.findingStore.PutBatch(batchID, fs)
+
+	counts := make(map[string]map[findings.Severity]int)
+	for _, f := range fs {
+		if _, ok := counts[f.ArtifactType]; !ok {
+			counts[f.ArtifactType] = make(map[findings.Severity]int)
+		}
+		counts[f.ArtifactType][f.Severity]++
+	}
+
+	scanResp := ScanResponse{
+		BatchID:     batchID,
+		Fingerprint: fp,
+		Counts:      counts,
+		Meta: map[string]string{
+			"target":       scanArgs.target,
+			"targetType":   scanArgs.targetType,
+			"scanType":     strings.Join(scanArgs.scanType, ","),
+			"severities":   strings.Join(scanArgs.severities, ","),
+			"outputFormat": scanArgs.outputFormat,
+			"fixedOnly":    fmt.Sprintf("%t", scanArgs.fixedOnly),
+		},
+		Next: Next{
+			Tool: "findings_list",
+			Why:  "To see the list of findings",
+		},
+	}
+
+	scanRespJSON, err := json.Marshal(scanResp)
+	if err != nil {
+		return nil, errors.New("failed to marshal scan response")
+	}
+
+	return mcp.NewToolResultText(string(scanRespJSON)), nil
 }
 
 func getFilename(targetType, format string) string {

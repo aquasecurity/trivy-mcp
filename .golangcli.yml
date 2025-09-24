@@ -41,8 +41,14 @@ linters-settings:
       - blank
       - dot
 
+
+
 issues:
   exclude-rules:
     - path: "."
       linters:
         - typecheck
+    - path: pkg/types/aqua_report.go
+      linters:
+        - govet
+      text: "struct field .* repeats json tag"
