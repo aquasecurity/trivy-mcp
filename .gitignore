@@ -11,3 +11,4 @@ mcp
 .vscode
 
 coverage*
+*.docx

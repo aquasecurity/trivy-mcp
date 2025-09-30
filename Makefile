@@ -2,6 +2,7 @@ SED=$(shell command -v gsed || command -v sed)
 PLATFORMS = linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64
 OUTPUTS = $(patsubst %,%/trivy-mcp,$(PLATFORMS))
 
+
 .PHONY: clean
 clean:
 	@rm -rf trivy-mcp*
@@ -11,7 +12,7 @@ test:
 	@echo "Running tests..."
 	@trivy_version=$$(cat go.mod | grep 'github.com/aquasecurity/trivy v' | awk '{ print $$2}') ;\
 	echo Current trivy version: $$trivy_version ;\
-	go test -v ./... -ldflags "-X github.com/aquasecurity/trivy-mcp/pkg/version.TrivyVersion=$${trivy_version}" -coverprofile=coverage.out -covermode=atomic
+	GOEXPERIMENT=jsonv2 go test -v ./... -ldflags "-X github.com/aquasecurity/trivy-mcp/pkg/version.TrivyVersion=$${trivy_version}" -coverprofile=coverage.out -covermode=atomic
 	@echo "Tests completed."
 
 .PHONY: coverage
@@ -19,7 +20,7 @@ coverage:
 	@echo "Generating coverage report..."
 	@trivy_version=$$(cat go.mod | grep 'github.com/aquasecurity/trivy v' | awk '{ print $$2}') ;\
 	echo Current trivy version: $$trivy_version ;\
-	go test -v ./... -ldflags "-X github.com/aquasecurity/trivy-mcp/pkg/version.TrivyVersion=$${trivy_version}" -coverprofile=coverage.out -covermode=atomic
+	GOEXPERIMENT=jsonv2 go test -v ./... -ldflags "-X github.com/aquasecurity/trivy-mcp/pkg/version.TrivyVersion=$${trivy_version}" -coverprofile=coverage.out -covermode=atomic
 	@go tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report generated: coverage.html"
 
@@ -36,7 +37,7 @@ build: clean $(OUTPUTS)
 	echo "Building for $*..."; \
 	GOOS=$(word 1,$(subst /, ,$*)); \
 	GOARCH=$(word 2,$(subst /, ,$*)); \
-	CGO_ENABLED=0 GOOS=$$GOOS GOARCH=$$GOARCH go build -ldflags "-s -w -X github.com/aquasecurity/trivy-mcp/pkg/version.Version=v$${NEW_VERSION} -X github.com/aquasecurity/trivy-mcp/pkg/version.TrivyVersion=$${trivy_version}" -o trivy-mcp ./cmd/trivy-mcp/main.go; \
+	GOEXPERIMENT=jsonv2 CGO_ENABLED=0 GOOS=$$GOOS GOARCH=$$GOARCH go build -ldflags "-s -w -X github.com/aquasecurity/trivy-mcp/pkg/version.Version=v$${NEW_VERSION} -X github.com/aquasecurity/trivy-mcp/pkg/version.TrivyVersion=$${trivy_version}" -o trivy-mcp ./cmd/trivy-mcp/main.go; \
 	if [ $$GOOS = "windows" ]; then \
 		mv trivy-mcp trivy-mcp.exe; \
 		tar -czf trivy-mcp-$$GOOS-$$GOARCH.tar.gz plugin.yaml trivy-mcp.exe LICENSE > /dev/null; \
@@ -63,14 +64,14 @@ install: add-plugin-manifest
 	@echo "Installing plugin..."
 	@trivy_version=$$(cat go.mod | grep 'github.com/aquasecurity/trivy v' | awk '{ print $$2}') ;\
 	echo Current trivy version: $$trivy_version ;\
-	go build -ldflags "-s -w -X github.com/aquasecurity/trivy-mcp/pkg/version.TrivyVersion=$${trivy_version}" -o ~/.trivy/plugins/mcp/trivy-mcp ./cmd/trivy-mcp/main.go;
+	GOEXPERIMENT=jsonv2 go build -ldflags "-s -w -X github.com/aquasecurity/trivy-mcp/pkg/version.TrivyVersion=$${trivy_version}" -o ~/.trivy/plugins/mcp/trivy-mcp ./cmd/trivy-mcp/main.go;
 	@echo "Plugin installed successfully."
 
 .PHONY: run
 run:
 	@trivy_version=$$(cat go.mod | grep 'github.com/aquasecurity/trivy v' | awk '{ print $$2}') ;\
 	echo Current trivy version: $$trivy_version ;\
-	go build  -ldflags "-s -w -X github.com/aquasecurity/trivy-mcp/pkg/version.TrivyVersion=$${trivy_version}" -o trivy-mcp ./cmd/trivy-mcp/main.go;
+	GOEXPERIMENT=jsonv2 go build  -ldflags "-s -w -X github.com/aquasecurity/trivy-mcp/pkg/version.TrivyVersion=$${trivy_version}" -o trivy-mcp ./cmd/trivy-mcp/main.go;
 	@./trivy-mcp help
 
 .PHONY: format
