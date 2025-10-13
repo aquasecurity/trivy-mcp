@@ -431,7 +431,7 @@ require (
 )
 
 require (
-	github.com/aquasecurity/trivy v0.67.0
+	github.com/aquasecurity/trivy v0.67.2
 	github.com/google/uuid v1.6.0
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
