@@ -78,6 +78,10 @@ func (m *McpServer) Start(ctx context.Context) error {
 
 	// Start the server
 	switch m.Transport {
+	case "streamable-http":
+		log.Info("Starting Trivy MCP server on port", log.Int("port", m.Port))
+		httpServer := server.NewStreamableHTTPServer(m.Server)
+		return httpServer.Start(fmt.Sprintf(":%d", m.Port))
 	case "sse":
 		log.Info("Starting Trivy MCP server on port", log.Int("port", m.Port))
 		sse = server.NewSSEServer(m.Server, server.WithBaseURL(fmt.Sprintf("http://localhost:%d", m.Port)), server.WithKeepAlive(true))
@@ -87,6 +91,6 @@ func (m *McpServer) Start(ctx context.Context) error {
 		stdio = server.NewStdioServer(m.Server)
 		return stdio.Listen(context.Background(), os.Stdin, os.Stdout)
 	default:
-		return nil
+		return fmt.Errorf("unsupported transport protocol: %s", m.Transport)
 	}
 }
