@@ -53,7 +53,7 @@ func NewResultsTools(findingStore *findings.Store) *ResultsTools {
 }
 
 func (f *ResultsTools) ListHandler(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	log.Debug("Listing findings", log.String("batchID", request.GetArguments()["batchID"].(string)))
+
 	args := request.GetArguments()
 	batchID := args["batchID"].(string)
 	minSeverity := args["minSeverity"].(string)
@@ -69,6 +69,7 @@ func (f *ResultsTools) ListHandler(ctx context.Context, request mcp.CallToolRequ
 		tokenVal = ""
 	}
 
+	log.Debug("Listing findings for batch", log.String("batchID", batchID))
 	listResult, err := f.findingStore.List(batchID, minSeverityVal, categories, limit, tokenVal)
 	if err != nil {
 		return mcp.NewToolResultErrorFromErr("failed to list findings", err), nil

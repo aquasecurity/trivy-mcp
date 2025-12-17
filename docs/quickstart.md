@@ -28,16 +28,24 @@ You can customize the server behavior with these options:
 
 | Option                       | Values         | Default | Description                           |
 | ---------------------------- | -------------- | ------- | ------------------------------------- |
-| `--transport` / `-t`         | `sse`, `stdio` | `stdio` | Transport protocol for the MCP Server |
-| `--port` / `-p`              |                | 23456   | Port for SSE transport mode           |
+| `--transport` / `-t`         | `streamable-http`, `sse`, `stdio` | `stdio` | Transport protocol for the MCP Server |
+| `--host` / `-H`              |                | `localhost` | Host/interface to listen on (network transports) |
+| `--port` / `-p`              |                | 23456   | Port for network transport modes      |
 | `--trivy-binary`             |                |         | Custom Trivy binary path (optional)   |
 | `--use-aqua-platform` / `-a` | `true/false`   | `false` | Enable Aqua Platform integration      |
 | `--debug`                    | `true/false`   | `false` | Enable debug logging                  |
 
-Example with SSE transport:
+Examples with different transports:
 
 ```sh
-trivy mcp --transport sse --port 8080
+# Streamable HTTP transport
+trivy mcp --transport streamable-http --host localhost --port 8080
+
+# SSE transport
+trivy mcp --transport sse --host localhost --port 8080
+
+# Listen on all interfaces (allows remote connections)
+trivy mcp --transport sse --host 0.0.0.0 --port 8080
 ```
 
 ## IDE Configuration

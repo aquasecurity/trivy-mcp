@@ -33,4 +33,4 @@ jobs:
           skip-cache: true
           args: --timeout 10m --verbose
         env:
-          GOEXPERIMENT: jsonv2
+          GOEXPERIMENT: jsonv2 # required for trivy

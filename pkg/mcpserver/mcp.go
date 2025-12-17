@@ -18,6 +18,8 @@ type McpServer struct {
 	Server *server.MCPServer
 	// Transport is the transport protocol to use for the connection
 	Transport string
+	// Host is the host/interface to listen on
+	Host string
 	// Port is the port to listen on
 	Port int
 
@@ -49,6 +51,7 @@ func NewMcpServer(opts flag.Options) *McpServer {
 	return &McpServer{
 		Server:    s,
 		Transport: opts.Transport,
+		Host:      opts.Host,
 		Port:      opts.SSEPort,
 		Opts:      opts,
 	}
@@ -60,6 +63,7 @@ func (m *McpServer) Start(ctx context.Context) error {
 	th.AddTools(m.Server)
 
 	var sse *server.SSEServer
+	var httpServer *server.StreamableHTTPServer
 	var stdio *server.StdioServer
 
 	go func() {
@@ -68,6 +72,11 @@ func (m *McpServer) Start(ctx context.Context) error {
 		if sse != nil {
 			if err := sse.Shutdown(ctx); err != nil {
 				log.Error("Failed to shutdown SSE server", log.Err(err))
+			}
+		}
+		if httpServer != nil {
+			if err := httpServer.Shutdown(ctx); err != nil {
+				log.Error("Failed to shutdown HTTP server", log.Err(err))
 			}
 		}
 		if th != nil {
@@ -79,13 +88,15 @@ func (m *McpServer) Start(ctx context.Context) error {
 	// Start the server
 	switch m.Transport {
 	case "streamable-http":
-		log.Info("Starting Trivy MCP server on port", log.Int("port", m.Port))
-		httpServer := server.NewStreamableHTTPServer(m.Server)
-		return httpServer.Start(fmt.Sprintf(":%d", m.Port))
+		addr := fmt.Sprintf("%s:%d", m.Host, m.Port)
+		log.Info("Starting Trivy MCP server", log.String("address", addr))
+		httpServer = server.NewStreamableHTTPServer(m.Server)
+		return httpServer.Start(addr)
 	case "sse":
-		log.Info("Starting Trivy MCP server on port", log.Int("port", m.Port))
-		sse = server.NewSSEServer(m.Server, server.WithBaseURL(fmt.Sprintf("http://localhost:%d", m.Port)), server.WithKeepAlive(true))
-		return sse.Start(fmt.Sprintf(":%d", m.Port))
+		addr := fmt.Sprintf("%s:%d", m.Host, m.Port)
+		log.Info("Starting Trivy MCP server", log.String("address", addr))
+		sse = server.NewSSEServer(m.Server, server.WithBaseURL(fmt.Sprintf("http://%s", addr)), server.WithKeepAlive(true))
+		return sse.Start(addr)
 	case "stdio":
 		log.Info("Starting Trivy MCP server as stdio")
 		stdio = server.NewStdioServer(m.Server)

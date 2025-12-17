@@ -7,6 +7,7 @@ var (
 	debug       bool
 	// mcp flags
 	transport       string
+	host            string
 	port            int
 	trivyBinary     string
 	useAquaPlatform bool
@@ -19,6 +20,7 @@ var (
 
 func AddMcpFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&transport, "transport", "t", "stdio", "Transport protocol to use (streamable-http, sse or stdio)")
+	cmd.Flags().StringVarP(&host, "host", "H", "localhost", "Host/interface to listen on")
 	cmd.Flags().IntVarP(&port, "port", "p", 23456, "Port to listen on")
 	cmd.Flags().StringVarP(&trivyBinary, "trivy-binary", "", "", "Path to the Trivy binary")
 	cmd.Flags().BoolVarP(&useAquaPlatform, "use-aqua-platform", "a", false, "Use Aqua platform")
@@ -42,6 +44,7 @@ func ToOptions() Options {
 		ShowVersion: showVersion,
 
 		Transport:       transport,
+		Host:            host,
 		SSEPort:         port,
 		TrivyBinary:     trivyBinary,
 		UseAquaPlatform: useAquaPlatform,
