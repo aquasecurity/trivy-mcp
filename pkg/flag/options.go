@@ -8,6 +8,7 @@ type Options struct {
 	ShowVersion bool
 
 	Transport       string
+	Host            string
 	SSEPort         int
 	TrivyBinary     string
 	UseAquaPlatform bool

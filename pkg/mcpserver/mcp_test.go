@@ -26,6 +26,18 @@ func TestNewMcpServer(t *testing.T) {
 			wantTransport: "sse",
 			wantPort:      5678,
 		},
+		{
+			name:          "streamable-http transport",
+			opts:          flag.Options{Transport: "streamable-http", SSEPort: 9100},
+			wantTransport: "streamable-http",
+			wantPort:      9100,
+		},
+		{
+			name:          "random transport",
+			opts:          flag.Options{Transport: "random"},
+			wantTransport: "random",
+			wantPort:      0,
+		},
 	}
 
 	for _, tt := range tests {

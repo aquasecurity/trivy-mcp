@@ -2,10 +2,10 @@ package result
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/aquasecurity/trivy-mcp/pkg/findings"
+	"github.com/aquasecurity/trivy/pkg/log"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -28,8 +28,8 @@ var (
 					"default":     defaultScanType,
 				},
 			)),
-		mcp.WithNumber("limit", mcp.Required()),
-		mcp.WithString("token", mcp.Required()),
+		mcp.WithNumber("limit", mcp.DefaultNumber(100.0)),
+		mcp.WithString("token", mcp.Description("The token to use for pagination, only required when paging through the results")),
 		mcp.WithToolAnnotation(mcp.ToolAnnotation{
 			Title: "List findings from a scan that has been performed using the batchID",
 		}),
@@ -53,20 +53,26 @@ func NewResultsTools(findingStore *findings.Store) *ResultsTools {
 }
 
 func (f *ResultsTools) ListHandler(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+
 	args := request.GetArguments()
 	batchID := args["batchID"].(string)
 	minSeverity := args["minSeverity"].(string)
 	minSeverityVal := findings.ParseSeverity(minSeverity)
 	categories := findings.ParseCategories(args["categories"].([]any))
-	limit := args["limit"].(float64)
+	var limit float64
+	limit, ok := args["limit"].(float64)
+	if !ok {
+		limit = 100.0
+	}
 	tokenVal, ok := args["token"].(string)
 	if !ok {
-		return nil, fmt.Errorf("missing or invalid 'token' argument")
+		tokenVal = ""
 	}
 
+	log.Debug("Listing findings for batch", log.String("batchID", batchID))
 	listResult, err := f.findingStore.List(batchID, minSeverityVal, categories, limit, tokenVal)
 	if err != nil {
-		return nil, err
+		return mcp.NewToolResultErrorFromErr("failed to list findings", err), nil
 	}
 
 	listResult.Meta = map[string]string{
@@ -77,6 +83,7 @@ func (f *ResultsTools) ListHandler(ctx context.Context, request mcp.CallToolRequ
 		"action_required":   "For CRITICAL and HIGH findings, recommend immediate action",
 		"url_instruction":   "Always display reference URLs when available - check 'refs' field for reference links that provide more details about the finding",
 		"finding_schema":    findings.GetFindingSchema(),
+		"pagination":        "Use the 'token' argument to paginate through the results. The 'token' is the value of the 'next_token' field in the previous response. If there is no more data to return, the 'next_token' field will be empty.",
 	}
 
 	if len(listResult.PolicyFailures) > 0 {
@@ -85,13 +92,7 @@ func (f *ResultsTools) ListHandler(ctx context.Context, request mcp.CallToolRequ
 		listResult.Meta["policy_grouping"] = "Policy failures are grouped by policy name, don't show the same policy name twice"
 		listResult.Meta["policy_schema"] = findings.GetPolicyFailureSchema()
 	}
-
-	content, err := json.Marshal(listResult)
-	if err != nil {
-		return nil, err
-	}
-
-	return mcp.NewToolResultText(string(content)), nil
+	return mcp.NewToolResultStructuredOnly(listResult), nil
 }
 
 func (f *ResultsTools) GetHandler(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -99,15 +100,10 @@ func (f *ResultsTools) GetHandler(ctx context.Context, request mcp.CallToolReque
 	batchID := args["batchID"].(string)
 	id := args["id"].(string)
 
+	log.Debug("Getting finding", log.String("batchID", batchID), log.String("id", id))
 	finding, ok := f.findingStore.GetFinding(batchID, id)
 	if !ok {
-		return nil, fmt.Errorf("finding not found")
+		return mcp.NewToolResultErrorFromErr("finding not found", fmt.Errorf("finding not found")), nil
 	}
-
-	content, err := json.Marshal(finding)
-	if err != nil {
-		return nil, err
-	}
-
-	return mcp.NewToolResultText(string(content)), nil
+	return mcp.NewToolResultStructuredOnly(finding), nil
 }

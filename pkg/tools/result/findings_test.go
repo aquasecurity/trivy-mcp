@@ -238,7 +238,7 @@ func TestListHandler(t *testing.T) {
 			result, err := tools.ListHandler(context.Background(), request)
 
 			if tt.expectError {
-				assert.Error(t, err)
+				assert.True(t, result.IsError)
 				return
 			}
 
@@ -386,8 +386,7 @@ func TestGetHandler(t *testing.T) {
 			result, err := tools.GetHandler(context.Background(), request)
 
 			if tt.expectError {
-				assert.Error(t, err)
-				assert.Nil(t, result)
+				assert.True(t, result.IsError)
 				return
 			}
 
