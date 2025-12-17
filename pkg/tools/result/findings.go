@@ -28,7 +28,7 @@ var (
 					"default":     defaultScanType,
 				},
 			)),
-		mcp.WithNumber("limit", mcp.Required(), mcp.DefaultNumber(100.0)),
+		mcp.WithNumber("limit", mcp.DefaultNumber(100.0)),
 		mcp.WithString("token", mcp.Description("The token to use for pagination, only required when paging through the results")),
 		mcp.WithToolAnnotation(mcp.ToolAnnotation{
 			Title: "List findings from a scan that has been performed using the batchID",
