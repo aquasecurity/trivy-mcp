@@ -82,6 +82,7 @@ func (f *ResultsTools) ListHandler(ctx context.Context, request mcp.CallToolRequ
 		"action_required":   "For CRITICAL and HIGH findings, recommend immediate action",
 		"url_instruction":   "Always display reference URLs when available - check 'refs' field for reference links that provide more details about the finding",
 		"finding_schema":    findings.GetFindingSchema(),
+		"pagination":        "Use the 'token' argument to paginate through the results. The 'token' is the value of the 'next_token' field in the previous response. If there is no more data to return, the 'next_token' field will be empty.",
 	}
 
 	if len(listResult.PolicyFailures) > 0 {
@@ -101,7 +102,7 @@ func (f *ResultsTools) GetHandler(ctx context.Context, request mcp.CallToolReque
 	log.Debug("Getting finding", log.String("batchID", batchID), log.String("id", id))
 	finding, ok := f.findingStore.GetFinding(batchID, id)
 	if !ok {
-		return nil, fmt.Errorf("finding not found")
+		return mcp.NewToolResultErrorFromErr("finding not found", fmt.Errorf("finding not found")), nil
 	}
 	return mcp.NewToolResultStructuredOnly(finding), nil
 }

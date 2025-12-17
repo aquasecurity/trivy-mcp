@@ -81,7 +81,7 @@ format:
 
 .PHONY: lint
 lint:
-	@which golangci-lint || go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.2
+	@which golangci-lint || go install github.com/golangci/golangci-lint/cmd/golangci-lint@v2.4.0
 	@golangci-lint run --timeout 3m --verbose
 
 .PHONY: bump-manifest
