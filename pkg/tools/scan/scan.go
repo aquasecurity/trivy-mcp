@@ -98,18 +98,14 @@ Follow the instructions that are given in the response.`),
 		outputFormatString,
 		fixedOnlyBool,
 		targetTypeString("repository"),
+		branchString,
 		mcp.WithToolAnnotation(mcp.ToolAnnotation{
 			Title: "Scan a remote git repository with Trivy",
 		}),
 	)
 )
 
-func (t *ScanTools) ScanWithTrivyHandler(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	scanArgs, err := parseScanArgs(request)
-	if err != nil {
-		return nil, err
-	}
-
+func buildBaseArgs(scanArgs *scanArgs, debug bool) []string {
 	args := []string{
 		scanArgs.targetType,
 		fmt.Sprintf("--scanners=%s", strings.Join(scanArgs.scanType, ",")),
@@ -117,7 +113,7 @@ func (t *ScanTools) ScanWithTrivyHandler(ctx context.Context, request mcp.CallTo
 		fmt.Sprintf("--format=%s", scanArgs.outputFormat),
 	}
 
-	if t.debug {
+	if debug {
 		args = append(args, "--debug")
 	}
 
@@ -130,6 +126,22 @@ func (t *ScanTools) ScanWithTrivyHandler(ctx context.Context, request mcp.CallTo
 	if scanArgs.outputFormat == "json" && slices.Contains(scanArgs.scanType, "vuln") {
 		args = append(args, "--list-all-pkgs")
 	}
+
+	// Scan a specific Git branch/tag when requested (repository scans only).
+	if scanArgs.targetType == "repository" && scanArgs.branch != "" {
+		args = append(args, fmt.Sprintf("--branch=%s", scanArgs.branch))
+	}
+
+	return args
+}
+
+func (t *ScanTools) ScanWithTrivyHandler(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	scanArgs, err := parseScanArgs(request)
+	if err != nil {
+		return nil, err
+	}
+
+	args := buildBaseArgs(scanArgs, t.debug)
 
 	// aquaPlatform only supports filesystem scans at the moment
 	if t.useAquaPlatform && scanArgs.targetType == "filesystem" {
@@ -210,6 +222,7 @@ func (t *ScanTools) ScanWithTrivyHandler(ctx context.Context, request mcp.CallTo
 			"severities":   strings.Join(scanArgs.severities, ","),
 			"outputFormat": scanArgs.outputFormat,
 			"fixedOnly":    fmt.Sprintf("%t", scanArgs.fixedOnly),
+			"branch":       scanArgs.branch,
 		},
 		Next: Next{
 			Tool: "findings_list",
