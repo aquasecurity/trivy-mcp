@@ -14,6 +14,7 @@ type scanArgs struct {
 	outputFormat string
 	isSBOM       bool
 	fixedOnly    bool
+	branch       string
 }
 
 var (
@@ -72,6 +73,10 @@ var fixedOnlyBool = mcp.WithBoolean("fixedOnly",
 	mcp.DefaultBool(false),
 )
 
+var branchString = mcp.WithString("branch",
+	mcp.Description("Git branch or tag to scan. Only used when targetType is repository. If omitted, the repository's default branch is scanned."),
+)
+
 func targetTypeString(expectedValue string) mcp.ToolOption {
 	return mcp.WithString("targetType",
 		mcp.Required(),
@@ -115,6 +120,7 @@ func parseScanArgs(request mcp.CallToolRequest) (*scanArgs, error) {
 	if !ok {
 		fixedOnlyBool = false
 	}
+	branch, _ := args["branch"].(string)
 
 	return &scanArgs{
 		target:       target,
@@ -124,5 +130,6 @@ func parseScanArgs(request mcp.CallToolRequest) (*scanArgs, error) {
 		outputFormat: outputFormat,
 		isSBOM:       outputFormat == "cyclonedx" || outputFormat == "spdx" || outputFormat == "spdx-json",
 		fixedOnly:    fixedOnlyBool,
+		branch:       branch,
 	}, nil
 }

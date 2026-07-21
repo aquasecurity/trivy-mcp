@@ -42,6 +42,36 @@ func TestScanArgsCorrectlyParsed(t *testing.T) {
 			},
 			expectError: false,
 		},
+		{
+			name: "Repository scan with branch",
+			request: mcp.CallToolRequest{
+				Params: struct {
+					Name      string    `json:"name"`
+					Arguments any       `json:"arguments,omitempty"`
+					Meta      *mcp.Meta `json:"_meta,omitempty"`
+				}{
+					Name: "scan_repository",
+					Arguments: map[string]any{
+						"target":       "https://github.com/acme/infra",
+						"targetType":   "repository",
+						"scanType":     []any{"vuln", "misconfig", "secret"},
+						"severities":   []any{"MEDIUM"},
+						"outputFormat": "json",
+						"branch":       "feature/add-vm",
+					},
+					Meta: nil,
+				},
+			},
+			expected: &scanArgs{
+				target:       "https://github.com/acme/infra",
+				targetType:   "repository",
+				scanType:     []string{"vuln", "misconfig", "secret"},
+				severities:   []string{"MEDIUM"},
+				outputFormat: "json",
+				branch:       "feature/add-vm",
+			},
+			expectError: false,
+		},
 	}
 
 	for _, tt := range tests {

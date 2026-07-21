@@ -8,6 +8,81 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestBuildBaseArgs(t *testing.T) {
+	tests := []struct {
+		name     string
+		args     *scanArgs
+		debug    bool
+		expected []string
+	}{
+		{
+			name: "repository scan with branch",
+			args: &scanArgs{
+				target:       "https://github.com/acme/infra",
+				targetType:   "repository",
+				scanType:     []string{"vuln", "misconfig", "secret"},
+				severities:   []string{"MEDIUM"},
+				outputFormat: "json",
+				branch:       "feature/add-vm",
+			},
+			debug: false,
+			expected: []string{
+				"repository",
+				"--scanners=vuln,misconfig,secret",
+				"--severity=MEDIUM",
+				"--format=json",
+				"--list-all-pkgs",
+				"--branch=feature/add-vm",
+			},
+		},
+		{
+			name: "repository scan without branch omits flag",
+			args: &scanArgs{
+				target:       "https://github.com/acme/infra",
+				targetType:   "repository",
+				scanType:     []string{"vuln"},
+				severities:   []string{"CRITICAL"},
+				outputFormat: "json",
+			},
+			debug: false,
+			expected: []string{
+				"repository",
+				"--scanners=vuln",
+				"--severity=CRITICAL",
+				"--format=json",
+				"--list-all-pkgs",
+			},
+		},
+		{
+			name: "filesystem scan ignores branch",
+			args: &scanArgs{
+				target:       "/tmp/project",
+				targetType:   "filesystem",
+				scanType:     []string{"vuln"},
+				severities:   []string{"HIGH"},
+				outputFormat: "json",
+				branch:       "feature/add-vm",
+			},
+			debug: true,
+			expected: []string{
+				"filesystem",
+				"--scanners=vuln",
+				"--severity=HIGH",
+				"--format=json",
+				"--debug",
+				"--list-all-pkgs",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := buildBaseArgs(tt.args, tt.debug)
+			assert.Equal(t, tt.expected, got)
+		})
+	}
+}
+
 func TestNewScanTools(t *testing.T) {
 	tests := []struct {
 		name      string
